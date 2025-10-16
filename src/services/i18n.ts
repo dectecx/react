@@ -80,6 +80,15 @@ export interface Translations {
   testLoading: string;
   showTestButton: string;
   hideTestButton: string;
+  
+  // Test Data
+  createTestData: string;
+  testDataInfo: string;
+  testDataAdminInfo: string;
+  testDataUserInfo: string;
+  creatingTestData: string;
+  testDataCreated: string;
+  testDataError: string;
 }
 
 const translations: Record<Language, Translations> = {
@@ -163,6 +172,15 @@ const translations: Record<Language, Translations> = {
     testLoading: '測試 Loading 動畫(請欣賞~)',
     showTestButton: '顯示測試按鈕',
     hideTestButton: '隱藏測試按鈕',
+    
+    // Test Data
+    createTestData: '建立測試資料',
+    testDataInfo: '測試帳號資訊',
+    testDataAdminInfo: '管理員帳號：admin / 密碼：123456',
+    testDataUserInfo: '一般使用者帳號：user / 密碼：123456',
+    creatingTestData: '建立測試資料中...',
+    testDataCreated: '測試資料建立成功！',
+    testDataError: '建立測試資料失敗。',
   },
   'en-US': {
     // Header
@@ -244,6 +262,15 @@ const translations: Record<Language, Translations> = {
     testLoading: 'Test Loading',
     showTestButton: 'Show Test Button',
     hideTestButton: 'Hide Test Button',
+    
+    // Test Data
+    createTestData: 'Create Test Data',
+    testDataInfo: 'Test Account Information',
+    testDataAdminInfo: 'Admin Account: admin / Password: 123456',
+    testDataUserInfo: 'User Account: user / Password: 123456',
+    creatingTestData: 'Creating test data...',
+    testDataCreated: 'Test data created successfully!',
+    testDataError: 'Failed to create test data.',
   },
 };
 

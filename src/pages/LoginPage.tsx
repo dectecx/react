@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AuthService, OpenAPI, ApiError } from '../api/generated';
+import { AuthService, TestDataService, OpenAPI, ApiError } from '../api/generated';
 import './LoginPage.css';
 import { authManager } from '../services/authManager';
 import { useAsyncAction } from '../hooks/useAsyncAction';
@@ -14,9 +14,11 @@ const LoginPage = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [testDataMessage, setTestDataMessage] = useState<string | null>(null);
   const navigate = useNavigate();
   const { t, currentLanguage, changeLanguage } = useI18n();
   const { isExecuting, executeAsync } = useAsyncAction(mode === 'login' ? t('loggingIn') : t('registering'));
+  const { isExecuting: isCreatingTestData, executeAsync: executeTestDataAsync } = useAsyncAction(t('creatingTestData'));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,6 +75,29 @@ const LoginPage = () => {
     changeLanguage(currentLanguage === 'zh-TW' ? 'en-US' : 'zh-TW');
   };
 
+  const handleCreateTestData = async () => {
+    setTestDataMessage(null);
+    setError(null);
+
+    const result = await executeTestDataAsync(async () => {
+      await TestDataService.postApiTestDataCreateTestUsers();
+    });
+
+    if (result === null) return; // Prevented duplicate execution
+
+    // Handle errors
+    if (result && result instanceof Error) {
+      if (result instanceof ApiError) {
+        setError(result.body?.message || `An error occurred: ${result.statusText}`);
+      } else {
+        setError(t('testDataError'));
+      }
+      console.error(result);
+    } else {
+      setTestDataMessage(t('testDataCreated'));
+    }
+  };
+
   return (
     <div className="login-page-container">
       <div className="login-language-toggle">
@@ -116,6 +141,23 @@ const LoginPage = () => {
             ? t('needAccount')
             : t('alreadyHaveAccount')}
         </button>
+        
+        {/* Test Data Section */}
+        <div className="test-data-section">
+          <h3>{t('testDataInfo')}</h3>
+          <div className="test-data-info">
+            <p className="test-data-admin">{t('testDataAdminInfo')}</p>
+            <p className="test-data-user">{t('testDataUserInfo')}</p>
+          </div>
+          {testDataMessage && <p className="success-message">{testDataMessage}</p>}
+          <button 
+            onClick={handleCreateTestData} 
+            className="test-data-button"
+            disabled={isCreatingTestData}
+          >
+            {isCreatingTestData ? t('creatingTestData') : t('createTestData')}
+          </button>
+        </div>
       </div>
     </div>
   );

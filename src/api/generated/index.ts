@@ -7,6 +7,7 @@ export { CancelablePromise, CancelError } from './core/CancelablePromise';
 export { OpenAPI } from './core/OpenAPI';
 export type { OpenAPIConfig } from './core/OpenAPI';
 
+export type { CacheTestRequest } from './models/CacheTestRequest';
 export { ConfirmationStatus } from './models/ConfirmationStatus';
 export type { ConfirmStateDto } from './models/ConfirmStateDto';
 export type { CreateWorkItemDto } from './models/CreateWorkItemDto';
@@ -19,5 +20,7 @@ export type { WorkItemDto } from './models/WorkItemDto';
 export type { WorkItemStateDto } from './models/WorkItemStateDto';
 
 export { AuthService } from './services/AuthService';
+export { CacheTestService } from './services/CacheTestService';
+export { TestDataService } from './services/TestDataService';
 export { UserStatesService } from './services/UserStatesService';
 export { WorkItemsService } from './services/WorkItemsService';

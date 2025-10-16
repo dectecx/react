@@ -101,6 +101,70 @@
   margin-bottom: 1rem;
 }
 
+/* Test Data Section */
+.test-data-section {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.test-data-section h3 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: var(--color-primary);
+  font-size: 1.1em;
+}
+
+.test-data-info {
+  background-color: rgba(255, 255, 255, 0.05);
+  padding: 1rem;
+  border-radius: var(--border-radius);
+  margin-bottom: 1rem;
+  text-align: left;
+}
+
+.test-data-admin,
+.test-data-user {
+  margin: 0.5rem 0;
+  font-size: 0.9em;
+  color: var(--color-text);
+}
+
+.test-data-admin {
+  color: #ff6b6b;
+  font-weight: 500;
+}
+
+.test-data-user {
+  color: #4ecdc4;
+  font-weight: 500;
+}
+
+.test-data-button {
+  background-color: var(--color-accent);
+  color: white;
+  width: 100%;
+  margin-top: 1rem;
+  font-size: 1em;
+  padding: 0.8rem;
+  border: none;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.test-data-button:hover:not(:disabled) {
+  background-color: #4a9d96;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.test-data-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .login-language-toggle {
