@@ -1,21 +1,51 @@
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Todo } from '../types/todo';
-
-// This is temporary. In a real app, you'd fetch this data.
-import { mockTodos } from './TodoListPage';
+import type { Todo } from '../types/todo';
+import { todoService } from '../api/todoService';
 
 const TodoDetailPage = () => {
   const { id } = useParams<{ id: string }>();
-  const todoId = Number(id);
-  const todo: Todo | undefined = mockTodos.find((t) => t.id === todoId);
+  const [todo, setTodo] = useState<Todo | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  if (!todo) {
+  useEffect(() => {
+    const fetchTodo = async () => {
+      if (!id) return;
+      try {
+        setIsLoading(true);
+        setError(null);
+        const fetchedTodo = await todoService.getTodoById(Number(id));
+        if (fetchedTodo) {
+          setTodo(fetchedTodo);
+        } else {
+          setError('Todo not found');
+        }
+      } catch (err) {
+        setError('Failed to fetch todo.');
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchTodo();
+  }, [id]);
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (error) {
     return (
       <div>
-        <h2>Todo not found</h2>
+        <h2>{error}</h2>
         <Link to="/">Back to List</Link>
       </div>
     );
+  }
+
+  if (!todo) {
+    return null; // Should be covered by error state
   }
 
   return (
