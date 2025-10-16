@@ -12,6 +12,7 @@ import InfoDisplay from '../components/InfoDisplay';
 import Toast from '../components/Toast';
 import TodoDetailModal from '../components/TodoDetailModal';
 import { authManager } from '../services/authManager';
+import { useAsyncAction } from '../hooks/useAsyncAction';
 import './TodoListPage.css';
 
 type SortKey = keyof WorkItemDto;
@@ -41,6 +42,8 @@ const TodoListPage: React.FC = () => {
   const [checkedItems, setCheckedItems] = useState<Record<number, boolean>>({});
 
   const isAdmin = authManager.isAdmin();
+  const { isExecuting: isConfirming, executeAsync: executeConfirmAsync } = useAsyncAction();
+  const { isExecuting: isUndoing, executeAsync: executeUndoAsync } = useAsyncAction();
 
   useEffect(() => {
     const fetchTodos = async () => {
@@ -170,24 +173,25 @@ const TodoListPage: React.FC = () => {
   };
 
   const handleConfirmStates = async () => {
-    setToastInfo(null);
+    const result = await executeConfirmAsync(async () => {
+      setToastInfo(null);
 
-    const statesToConfirm: WorkItemStateDto[] = Object.entries(checkedItems)
-      .filter(([, isChecked]) => isChecked)
-      .map(([itemId]) => ({
-        workItemId: Number(itemId),
-        isConfirmed: true,
-      }));
+      const statesToConfirm: WorkItemStateDto[] = Object.entries(checkedItems)
+        .filter(([, isChecked]) => isChecked)
+        .map(([itemId]) => ({
+          workItemId: Number(itemId),
+          isConfirmed: true,
+        }));
 
-    if (statesToConfirm.length === 0) {
-      setToastInfo({ message: "Please select items to confirm.", type: 'error' });
-      return;
-    }
+      if (statesToConfirm.length === 0) {
+        setToastInfo({ message: "Please select items to confirm.", type: 'error' });
+        return;
+      }
 
-    try {
       await UserStatesService.postApiUserStatesConfirm({
         states: statesToConfirm,
       });
+      
       setToastInfo({
         message: `Successfully confirmed ${statesToConfirm.length} item(s).`,
         type: 'success',
@@ -197,15 +201,20 @@ const TodoListPage: React.FC = () => {
       // Refresh the list to get updated status
       const updatedTodos = await WorkItemsService.getApiWorkItems();
       setTodos(updatedTodos);
-    } catch (err) {
+    });
+
+    if (result === null) return; // Prevented duplicate execution
+
+    // Handle errors
+    if (result && result instanceof Error) {
       setToastInfo({ message: "Failed to confirm items. Please try again.", type: 'error' });
-      console.error(err);
+      console.error(result);
     }
   };
 
   const handleUndoConfirm = async (itemId: number) => {
     if (window.confirm('確定要將此項目標記回「待確認」嗎？')) {
-      try {
+      const result = await executeUndoAsync(async () => {
         setToastInfo(null);
         await UserStatesService.postApiUserStatesConfirm({
           states: [{ workItemId: itemId, isConfirmed: false }],
@@ -214,9 +223,14 @@ const TodoListPage: React.FC = () => {
         // Refresh the list to get updated status
         const updatedTodos = await WorkItemsService.getApiWorkItems();
         setTodos(updatedTodos);
-      } catch (err) {
+      });
+
+      if (result === null) return; // Prevented duplicate execution
+
+      // Handle errors
+      if (result && result instanceof Error) {
         setToastInfo({ message: '撤銷確認失敗，請重試', type: 'error' });
-        console.error(err);
+        console.error(result);
       }
     }
   };
@@ -325,9 +339,10 @@ const TodoListPage: React.FC = () => {
                           type="button"
                           className="action-button undo-button"
                           onClick={() => todo.id && handleUndoConfirm(todo.id)}
+                          disabled={isUndoing}
                         >
                           <span className="icon">↶</span>
-                          <span className="text">Undo</span>
+                          <span className="text">{isUndoing ? 'Undoing...' : 'Undo'}</span>
                         </button>
                       )}
                     </td>
@@ -340,9 +355,9 @@ const TodoListPage: React.FC = () => {
               <button 
                 onClick={handleConfirmStates} 
                 className="confirm-button"
-                disabled={!hasSelectedItems}
+                disabled={!hasSelectedItems || isConfirming}
               >
-                Confirm Selected Items
+                {isConfirming ? 'Confirming...' : 'Confirm Selected Items'}
               </button>
             </div>
           </>

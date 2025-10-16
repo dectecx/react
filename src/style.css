@@ -41,6 +41,19 @@ button {
   font-size: 1em;
   font-weight: 500;
   transition: all 0.25s;
+  background-color: var(--color-primary);
+  color: white;
+}
+
+button:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
 }
 
 input,
