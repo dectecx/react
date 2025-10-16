@@ -75,3 +75,23 @@ td button:hover {
 td button + button {
   margin-left: 0.5rem;
 }
+
+.batch-actions {
+  margin-top: 1.5rem;
+  text-align: right;
+}
+
+.confirm-button {
+  background-color: var(--color-primary);
+  color: white;
+  font-size: 1.05em;
+}
+
+.confirm-button:hover {
+  opacity: 0.9;
+}
+
+td input[type='checkbox'] {
+  width: auto;
+  cursor: pointer;
+}
