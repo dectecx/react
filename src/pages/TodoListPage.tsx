@@ -1,4 +1,5 @@
-import { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import type {
   WorkItemDto,
   CreateWorkItemDto,
@@ -10,8 +11,8 @@ import TodoForm from '../components/TodoForm';
 import InfoDisplay from '../components/InfoDisplay';
 import Toast from '../components/Toast';
 import TodoDetailModal from '../components/TodoDetailModal';
+import { authManager } from '../services/authManager';
 import './TodoListPage.css';
-import { Link, useSearchParams } from 'react-router-dom';
 
 type SortKey = keyof WorkItemDto;
 type SortOrder = 'asc' | 'desc';
@@ -21,7 +22,7 @@ type ToastInfo = {
   type: 'success' | 'error';
 };
 
-const TodoListPage = () => {
+const TodoListPage: React.FC = () => {
   const [todos, setTodos] = useState<WorkItemDto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [toastInfo, setToastInfo] = useState<ToastInfo | null>(null);
@@ -36,8 +37,10 @@ const TodoListPage = () => {
   );
 
   const [editingTodo, setEditingTodo] = useState<WorkItemDto | null>(null);
-  const [checkedItems, setCheckedItems] = useState<Record<number, boolean>>({});
   const [viewingTodo, setViewingTodo] = useState<WorkItemDto | null>(null);
+  const [checkedItems, setCheckedItems] = useState<Record<number, boolean>>({});
+
+  const isAdmin = authManager.isAdmin();
 
   useEffect(() => {
     const fetchTodos = async () => {
@@ -82,9 +85,7 @@ const TodoListPage = () => {
     setSearchParams({ sortKey: key, sortOrder: newSortOrder });
   };
 
-  const handleAddTodo = async (
-    newTodoData: CreateWorkItemDto
-  ) => {
+  const handleAddTodo = async (newTodoData: CreateWorkItemDto) => {
     try {
       setToastInfo(null);
       const newTodo = await WorkItemsService.postApiWorkItems(newTodoData);
@@ -96,14 +97,12 @@ const TodoListPage = () => {
     }
   };
 
-  const handleUpdateTodo = async (
-    updatedTodoData: UpdateWorkItemDto
-  ) => {
+  const handleUpdateTodo = async (updatedTodoData: UpdateWorkItemDto) => {
     if (!editingTodo || !editingTodo.id) return;
     try {
       setToastInfo(null);
       await WorkItemsService.putApiWorkItems(editingTodo.id, updatedTodoData);
-      // Refetch list to get updated data, or update locally
+
       const updatedTodos = todos.map((todo) =>
         todo.id === editingTodo.id
           ? { ...todo, ...updatedTodoData, updatedTime: new Date().toISOString() }
@@ -140,11 +139,34 @@ const TodoListPage = () => {
     setEditingTodo(null);
   };
 
+  const handleViewDetails = (todo: WorkItemDto) => {
+    setViewingTodo(todo);
+  };
+
+  const handleCloseModal = () => {
+    setViewingTodo(null);
+  };
+
   const handleCheckChange = (itemId: number) => {
     setCheckedItems((prev) => ({
       ...prev,
       [itemId]: !prev[itemId],
     }));
+  };
+
+  const handleSelectAll = () => {
+    const allChecked = sortedTodos.every(todo => checkedItems[todo.id!]);
+    const newCheckedItems: Record<number, boolean> = {};
+    
+    if (!allChecked) {
+      sortedTodos.forEach(todo => {
+        if (todo.id) {
+          newCheckedItems[todo.id] = true;
+        }
+      });
+    }
+    
+    setCheckedItems(newCheckedItems);
   };
 
   const handleConfirmStates = async () => {
@@ -153,8 +175,8 @@ const TodoListPage = () => {
     const statesToConfirm: WorkItemStateDto[] = Object.entries(checkedItems)
       .filter(([, isChecked]) => isChecked)
       .map(([itemId]) => ({
-        workItemId: Number(itemId), // Changed from itemId
-        isConfirmed: true,        // Changed from isChecked
+        workItemId: Number(itemId),
+        isConfirmed: true,
       }));
 
     if (statesToConfirm.length === 0) {
@@ -177,19 +199,31 @@ const TodoListPage = () => {
     }
   };
 
-  const handleViewDetails = (todo: WorkItemDto) => {
-    setViewingTodo(todo);
+  const handleUndoConfirm = async (itemId: number) => {
+    if (window.confirm('確定要將此項目標記回「待確認」嗎？')) {
+      try {
+        setToastInfo(null);
+        await UserStatesService.postApiUserStatesConfirm({
+          states: [{ workItemId: itemId, isConfirmed: false }],
+        });
+        setToastInfo({ message: '已將項目標記為待確認', type: 'success' });
+        // Refresh the list to get updated status
+        const updatedTodos = await WorkItemsService.getApiWorkItems();
+        setTodos(updatedTodos);
+      } catch (err) {
+        setToastInfo({ message: '撤銷確認失敗，請重試', type: 'error' });
+        console.error(err);
+      }
+    }
   };
 
-  const handleCloseModal = () => {
-    setViewingTodo(null);
-  };
+  const isAllSelected = sortedTodos.length > 0 && sortedTodos.every(todo => checkedItems[todo.id!]);
+  const hasSelectedItems = Object.values(checkedItems).some(Boolean);
 
   if (isLoading) {
     return <InfoDisplay title="Loading Todos..." />;
   }
 
-  // Display full-page error only on initial load failure
   if (todos.length === 0 && toastInfo?.type === 'error') {
     return <InfoDisplay title="Something went wrong" message={toastInfo.message} />;
   }
@@ -204,37 +238,42 @@ const TodoListPage = () => {
             onClose={() => setToastInfo(null)}
           />
         )}
-        <h2>{editingTodo ? 'Edit Todo' : 'Add New Todo'}</h2>
-        <TodoForm
-          key={editingTodo ? editingTodo.id : 'add-form'}
-          isEditing={!!editingTodo}
-          onSubmit={editingTodo ? handleUpdateTodo : handleAddTodo}
-          initialData={editingTodo ?? undefined}
-          onCancel={handleCancelEdit} // Pass the cancel handler
-        />
-        {editingTodo && (
-          <button
-            type="button"
-            onClick={handleCancelEdit}
-            className="cancel-button"
-          >
-            Cancel Edit
-          </button>
+
+        {isAdmin && (
+          <>
+            <h2>{editingTodo ? 'Edit Todo' : 'Add New Todo'}</h2>
+            <TodoForm
+              key={editingTodo ? editingTodo.id : 'add-form'}
+              isEditing={!!editingTodo}
+              onSubmit={editingTodo ? handleUpdateTodo : handleAddTodo}
+              initialData={editingTodo ?? undefined}
+              onCancel={handleCancelEdit}
+            />
+          </>
         )}
 
-        <h2>Todo List</h2>
+        <h2>Work Items</h2>
 
         {sortedTodos.length > 0 ? (
           <>
             <table>
               <thead>
                 <tr>
-                  <th>{/* Checkbox header */}</th>
+                  <th>
+                    <input
+                      type="checkbox"
+                      checked={isAllSelected}
+                      onChange={handleSelectAll}
+                    />
+                  </th>
                   <th onClick={() => handleSort('id')}>
                     編號 {sortKey === 'id' && (sortOrder === 'asc' ? '▲' : '▼')}
                   </th>
                   <th onClick={() => handleSort('title')}>
                     標題 {sortKey === 'title' && (sortOrder === 'asc' ? '▲' : '▼')}
+                  </th>
+                  <th onClick={() => handleSort('userStatus')}>
+                    狀態 {sortKey === 'userStatus' && (sortOrder === 'asc' ? '▲' : '▼')}
                   </th>
                   <th>Actions</th>
                 </tr>
@@ -251,38 +290,62 @@ const TodoListPage = () => {
                     </td>
                     <td>{todo.id}</td>
                     <td>{todo.title}</td>
+                    <td>
+                      <span className={`status-badge status-${todo.userStatus?.toLowerCase()}`}>
+                        {todo.userStatus === 'Confirmed' ? '已確認' : '待確認'}
+                      </span>
+                    </td>
                     <td onClick={(e) => e.stopPropagation()}>
                       <button type="button" className="action-button" onClick={() => handleViewDetails(todo)}>
                         <span className="icon">🔍</span>
                         <span className="text">View</span>
                       </button>
-                      <button type="button" className="action-button" onClick={() => handleEdit(todo)}>
-                        <span className="icon">✏️</span>
-                        <span className="text">Edit</span>
-                      </button>
-                      <button
-                        type="button"
-                        className="action-button"
-                        onClick={() => todo.id && handleDeleteTodo(todo.id)}
-                      >
-                        <span className="icon">🗑️</span>
-                        <span className="text">Delete</span>
-                      </button>
+                      {isAdmin && (
+                        <>
+                          <button type="button" className="action-button" onClick={() => handleEdit(todo)}>
+                            <span className="icon">✏️</span>
+                            <span className="text">Edit</span>
+                          </button>
+                          <button
+                            type="button"
+                            className="action-button"
+                            onClick={() => todo.id && handleDeleteTodo(todo.id)}
+                          >
+                            <span className="icon">🗑️</span>
+                            <span className="text">Delete</span>
+                          </button>
+                        </>
+                      )}
+                      {todo.userStatus === 'Confirmed' && (
+                        <button
+                          type="button"
+                          className="action-button undo-button"
+                          onClick={() => todo.id && handleUndoConfirm(todo.id)}
+                        >
+                          <span className="icon">↶</span>
+                          <span className="text">Undo</span>
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+            
             <div className="batch-actions">
-              <button onClick={handleConfirmStates} className="confirm-button">
+              <button 
+                onClick={handleConfirmStates} 
+                className="confirm-button"
+                disabled={!hasSelectedItems}
+              >
                 Confirm Selected Items
               </button>
             </div>
           </>
         ) : (
           <InfoDisplay
-            title="No todos yet!"
-            message="Use the form above to add your first todo item."
+            title="No work items yet!"
+            message={isAdmin ? "Use the form above to add your first work item." : "No work items available."}
           />
         )}
       </div>

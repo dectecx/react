@@ -112,7 +112,38 @@ td button + button {
   opacity: 0.9;
 }
 
-td input[type='checkbox'] {
-  width: auto;
-  cursor: pointer;
+.status-badge {
+  display: inline-block;
+  padding: 0.25em 0.6em;
+  font-size: 0.9em;
+  font-weight: bold;
+  border-radius: var(--border-radius);
+  color: white;
+  width: fit-content;
+}
+
+.status-badge.status-pending {
+  background-color: #a0a0a0;
+}
+
+.status-badge.status-confirmed {
+  background-color: var(--color-accent);
+}
+
+.undo-button {
+  background-color: var(--color-secondary) !important;
+  color: white !important;
+}
+
+.undo-button:hover {
+  opacity: 0.9;
+}
+
+.confirm-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.confirm-button:disabled:hover {
+  opacity: 0.5;
 }

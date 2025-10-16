@@ -7,7 +7,9 @@ import {
 import App from './pages/App.tsx';
 import LoginPage from './pages/LoginPage.tsx';
 import TodoListPage from './pages/TodoListPage.tsx';
+import WorkItemEditPage from './pages/WorkItemEditPage.tsx';
 import ProtectedRoute from './components/ProtectedRoute';
+import AdminProtectedRoute from './components/AdminProtectedRoute';
 import './style.css';
 import { OpenAPI } from './api/generated';
 import setupAxiosInterceptor, { setNavigate } from './api/axiosInterceptor.ts';
@@ -36,6 +38,22 @@ const router = createBrowserRouter([
         element: <TodoListPage />,
       },
     ],
+  },
+  {
+    path: '/admin/work-items/new',
+    element: (
+      <AdminProtectedRoute>
+        <WorkItemEditPage />
+      </AdminProtectedRoute>
+    ),
+  },
+  {
+    path: '/admin/work-items/:id/edit',
+    element: (
+      <AdminProtectedRoute>
+        <WorkItemEditPage />
+      </AdminProtectedRoute>
+    ),
   },
   {
     path: '/login',

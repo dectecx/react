@@ -26,9 +26,9 @@ const TodoDetailModal: React.FC<TodoDetailModalProps> = ({ todo, onClose }) => {
             <span className="detail-value">{todo.id}</span>
           </div>
           <div className="detail-item">
-            <span className="detail-label">建立時間</span>
-            <span className="detail-value">
-              {todo.createdTime ? new Date(todo.createdTime).toLocaleString() : 'N/A'}
+            <span className="detail-label">狀態</span>
+            <span className={`detail-value status-badge status-${todo.userStatus?.toLowerCase()}`}>
+              {todo.userStatus === 'Confirmed' ? '已確認' : '待確認'}
             </span>
           </div>
           <div className="detail-item full-width">

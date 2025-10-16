@@ -16,10 +16,25 @@
   z-index: 10;
 }
 
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
 .app-header h1 {
   margin: 0;
   font-size: 1.5rem;
   color: var(--color-primary);
+}
+
+.user-role {
+  background-color: var(--color-accent);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--border-radius);
+  font-size: 0.9rem;
+  font-weight: 500;
 }
 
 .logout-button {

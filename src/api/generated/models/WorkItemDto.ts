@@ -2,10 +2,12 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import type { ConfirmationStatus } from './ConfirmationStatus';
 export type WorkItemDto = {
     id?: number;
     title?: string | null;
     description?: string | null;
+    userStatus?: ConfirmationStatus;
     createdUser?: string | null;
     createdTime?: string;
     updatedUser?: string | null;

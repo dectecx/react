@@ -7,6 +7,7 @@ export { CancelablePromise, CancelError } from './core/CancelablePromise';
 export { OpenAPI } from './core/OpenAPI';
 export type { OpenAPIConfig } from './core/OpenAPI';
 
+export { ConfirmationStatus } from './models/ConfirmationStatus';
 export type { ConfirmStateDto } from './models/ConfirmStateDto';
 export type { CreateWorkItemDto } from './models/CreateWorkItemDto';
 export type { LoginDto } from './models/LoginDto';

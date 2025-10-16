@@ -361,6 +361,13 @@
         },
         "additionalProperties": false
       },
+      "ConfirmationStatus": {
+        "enum": [
+          "Pending",
+          "Confirmed"
+        ],
+        "type": "string"
+      },
       "CreateWorkItemDto": {
         "type": "object",
         "properties": {
@@ -459,6 +466,9 @@
           "description": {
             "type": "string",
             "nullable": true
+          },
+          "userStatus": {
+            "$ref": "#/components/schemas/ConfirmationStatus"
           },
           "createdUser": {
             "type": "string",
