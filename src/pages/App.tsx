@@ -4,11 +4,13 @@ import { authManager } from '../services/authManager';
 import { useGlobalLoading } from '../services/globalLoadingManager';
 import { globalLoadingManager } from '../services/globalLoadingManager';
 import LoadingOverlay from '../components/LoadingOverlay';
+import { useState } from 'react';
 
 function App() {
   const navigate = useNavigate();
   const userRole = authManager.getUserRole();
   const { isLoading, loadingMessage } = useGlobalLoading();
+  const [showTestButton, setShowTestButton] = useState(false);
 
   const handleLogout = () => {
     authManager.logout(navigate);
@@ -34,9 +36,18 @@ function App() {
           )}
         </div>
         <div className="header-right">
-          <button onClick={testLoading} className="test-loading-button">
-            Test Loading
+          <button 
+            onClick={() => setShowTestButton(!showTestButton)} 
+            className="toggle-test-button"
+            title={showTestButton ? "隱藏測試按鈕" : "顯示測試按鈕"}
+          >
+            {showTestButton ? '🔽' : '🔼'}
           </button>
+          {showTestButton && (
+            <button onClick={testLoading} className="test-loading-button">
+              Test Loading
+            </button>
+          )}
           <button onClick={handleLogout} className="logout-button">
             Logout
           </button>
