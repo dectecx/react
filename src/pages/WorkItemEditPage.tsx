@@ -25,7 +25,7 @@ const WorkItemEditPage: React.FC = () => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
 
-  const { isExecuting, executeAsync } = useAsyncAction();
+  const { isExecuting, executeAsync } = useAsyncAction(isEditMode ? 'Updating work item...' : 'Creating work item...');
 
   useEffect(() => {
     if (isEditMode && id) {
@@ -62,28 +62,24 @@ const WorkItemEditPage: React.FC = () => {
       return;
     }
 
-    const result = await executeAsync(async () => {
-      setToastInfo(null);
-      
-      if (isEditMode && id) {
-        await globalLoadingManager.withLoading(async () => {
-          const updateData: UpdateWorkItemDto = { title, description };
-          await WorkItemsService.putApiWorkItems(Number(id), updateData);
-        }, 'Updating work item...');
-        setToastInfo({ message: 'Work item updated successfully!', type: 'success' });
-      } else {
-        await globalLoadingManager.withLoading(async () => {
-          const createData: CreateWorkItemDto = { title, description };
-          await WorkItemsService.postApiWorkItems(createData);
-        }, 'Creating work item...');
-        setToastInfo({ message: 'Work item created successfully!', type: 'success' });
-      }
-      
-      // Navigate back to list after a short delay to show success message
-      setTimeout(() => {
-        navigate('/');
-      }, 1500);
-    });
+            const result = await executeAsync(async () => {
+              setToastInfo(null);
+              
+              if (isEditMode && id) {
+                const updateData: UpdateWorkItemDto = { title, description };
+                await WorkItemsService.putApiWorkItems(Number(id), updateData);
+                setToastInfo({ message: 'Work item updated successfully!', type: 'success' });
+              } else {
+                const createData: CreateWorkItemDto = { title, description };
+                await WorkItemsService.postApiWorkItems(createData);
+                setToastInfo({ message: 'Work item created successfully!', type: 'success' });
+              }
+              
+              // Navigate back to list after a short delay to show success message
+              setTimeout(() => {
+                navigate('/');
+              }, 1500);
+            });
 
     if (result === null) return; // Prevented duplicate execution
 

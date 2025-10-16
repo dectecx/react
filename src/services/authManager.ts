@@ -7,7 +7,10 @@ const REFRESH_TOKEN_KEY = 'refreshToken';
 export type UserRole = 'Admin' | 'User';
 
 interface JwtPayload {
+  'http://schemas.microsoft.com/ws/2008/06/identity/claims/role'?: string | string[];
   'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/role'?: string | string[];
+  'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'?: string;
+  'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'?: string;
   role?: UserRole | UserRole[];
   [key: string]: any;
 }
@@ -17,16 +20,19 @@ class AuthManager {
   private token: string | null = localStorage.getItem(TOKEN_KEY);
   private refreshToken: string | null = localStorage.getItem(REFRESH_TOKEN_KEY);
   private userRole: UserRole | null = null;
+  private userName: string | null = null;
 
   private constructor() {
-    // Decode role from token on initialization
+    // Decode role and name from token on initialization
     if (this.token) {
       try {
         const decoded = jwtDecode<JwtPayload>(this.token);
         this.userRole = this.extractRole(decoded);
+        this.userName = this.extractName(decoded);
       } catch (error) {
         console.error('Failed to decode token:', error);
         this.userRole = 'User'; // Default to User role
+        this.userName = 'Unknown';
       }
     }
   }
@@ -72,6 +78,23 @@ class AuthManager {
     return 'User';
   }
 
+  private extractName(decoded: JwtPayload): string {
+    // Try to get name from XMLSOAP Claims Name
+    const nameClaim = decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'];
+    if (nameClaim) {
+      return nameClaim;
+    }
+    
+    // Fallback to other possible name claims
+    const nameIdentifier = decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'];
+    if (nameIdentifier) {
+      return nameIdentifier;
+    }
+    
+    // Default to Unknown
+    return 'Unknown';
+  }
+
   public static getInstance(): AuthManager {
     if (!AuthManager.instance) {
       AuthManager.instance = new AuthManager();
@@ -90,6 +113,10 @@ class AuthManager {
     return this.userRole;
   }
 
+  public getUserName(): string | null {
+    return this.userName;
+  }
+
   public isAdmin(): boolean {
     return this.userRole === 'Admin';
   }
@@ -100,13 +127,15 @@ class AuthManager {
     localStorage.setItem(TOKEN_KEY, token);
     localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
 
-    // Decode and store user role
+    // Decode and store user role and name
     try {
       const decoded = jwtDecode<JwtPayload>(token);
       this.userRole = this.extractRole(decoded);
+      this.userName = this.extractName(decoded);
     } catch (error) {
       console.error('Failed to decode token:', error);
       this.userRole = 'User';
+      this.userName = 'Unknown';
     }
   }
 
@@ -114,6 +143,7 @@ class AuthManager {
     this.token = null;
     this.refreshToken = null;
     this.userRole = null;
+    this.userName = null;
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(REFRESH_TOKEN_KEY);
     OpenAPI.TOKEN = undefined;

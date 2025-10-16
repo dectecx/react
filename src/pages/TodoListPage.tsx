@@ -43,11 +43,11 @@ const TodoListPage: React.FC = () => {
   const [checkedItems, setCheckedItems] = useState<Record<number, boolean>>({});
 
   const isAdmin = authManager.isAdmin();
-  const { isExecuting: isConfirming, executeAsync: executeConfirmAsync } = useAsyncAction();
-  const { isExecuting: isUndoing, executeAsync: executeUndoAsync } = useAsyncAction();
-  const { executeAsync: executeAddAsync } = useAsyncAction();
-  const { executeAsync: executeUpdateAsync } = useAsyncAction();
-  const { isExecuting: isDeleting, executeAsync: executeDeleteAsync } = useAsyncAction();
+  const { isExecuting: isConfirming, executeAsync: executeConfirmAsync } = useAsyncAction('Confirming items...');
+  const { isExecuting: isUndoing, executeAsync: executeUndoAsync } = useAsyncAction('Undoing confirmation...');
+  const { executeAsync: executeAddAsync } = useAsyncAction('Creating work item...');
+  const { executeAsync: executeUpdateAsync } = useAsyncAction('Updating work item...');
+  const { isExecuting: isDeleting, executeAsync: executeDeleteAsync } = useAsyncAction('Deleting work item...');
 
   useEffect(() => {
     const fetchTodos = async () => {
@@ -97,10 +97,8 @@ const TodoListPage: React.FC = () => {
   const handleAddTodo = async (newTodoData: CreateWorkItemDto) => {
     const result = await executeAddAsync(async () => {
       setToastInfo(null);
-      await globalLoadingManager.withLoading(async () => {
-        const newTodo = await WorkItemsService.postApiWorkItems(newTodoData);
-        setTodos([...todos, newTodo]);
-      }, 'Creating work item...');
+      const newTodo = await WorkItemsService.postApiWorkItems(newTodoData);
+      setTodos([...todos, newTodo]);
       setToastInfo({ message: 'Successfully added todo!', type: 'success' });
     });
 
@@ -118,9 +116,7 @@ const TodoListPage: React.FC = () => {
     
     const result = await executeUpdateAsync(async () => {
       setToastInfo(null);
-      await globalLoadingManager.withLoading(async () => {
-        await WorkItemsService.putApiWorkItems(editingTodo.id!, updatedTodoData);
-      }, 'Updating work item...');
+      await WorkItemsService.putApiWorkItems(editingTodo.id!, updatedTodoData);
 
       const updatedTodos = todos.map((todo) =>
         todo.id === editingTodo.id
@@ -145,9 +141,7 @@ const TodoListPage: React.FC = () => {
     if (window.confirm('Are you sure you want to delete this todo?')) {
       const result = await executeDeleteAsync(async () => {
         setToastInfo(null);
-        await globalLoadingManager.withLoading(async () => {
-          await WorkItemsService.deleteApiWorkItems(id);
-        }, 'Deleting work item...');
+        await WorkItemsService.deleteApiWorkItems(id);
         setTodos(todos.filter((todo) => todo.id !== id));
         setToastInfo({ message: 'Successfully deleted todo!', type: 'success' });
       });
@@ -216,11 +210,9 @@ const TodoListPage: React.FC = () => {
         return;
       }
 
-      await globalLoadingManager.withLoading(async () => {
-        await UserStatesService.postApiUserStatesConfirm({
-          states: statesToConfirm,
-        });
-      }, 'Confirming items...');
+      await UserStatesService.postApiUserStatesConfirm({
+        states: statesToConfirm,
+      });
       
       setToastInfo({
         message: `Successfully confirmed ${statesToConfirm.length} item(s).`,
@@ -246,11 +238,9 @@ const TodoListPage: React.FC = () => {
     if (window.confirm('確定要將此項目標記回「待確認」嗎？')) {
       const result = await executeUndoAsync(async () => {
         setToastInfo(null);
-        await globalLoadingManager.withLoading(async () => {
-          await UserStatesService.postApiUserStatesConfirm({
-            states: [{ workItemId: itemId, isConfirmed: false }],
-          });
-        }, 'Undoing confirmation...');
+        await UserStatesService.postApiUserStatesConfirm({
+          states: [{ workItemId: itemId, isConfirmed: false }],
+        });
         setToastInfo({ message: '已將項目標記為待確認', type: 'success' });
         // Refresh the list to get updated status
         const updatedTodos = await WorkItemsService.getApiWorkItems();

@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { AuthService, OpenAPI, ApiError } from '../api/generated';
 import './LoginPage.css';
 import { authManager } from '../services/authManager';
-import { globalLoadingManager } from '../services/globalLoadingManager';
 import { useAsyncAction } from '../hooks/useAsyncAction';
 
 type FormMode = 'login' | 'register';
@@ -15,7 +14,7 @@ const LoginPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const navigate = useNavigate();
-  const { isExecuting, executeAsync } = useAsyncAction();
+  const { isExecuting, executeAsync } = useAsyncAction(mode === 'login' ? 'Logging in...' : 'Registering...');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,25 +28,21 @@ const LoginPage = () => {
 
     const result = await executeAsync(async () => {
       if (mode === 'login') {
-        await globalLoadingManager.withLoading(async () => {
-          const response = await AuthService.postApiAuthLogin({
-            username,
-            password,
-          });
-          const { accessToken, refreshToken } = response;
-          
-          authManager.setTokens(accessToken, refreshToken);
-          OpenAPI.TOKEN = accessToken;
-          
-          navigate('/');
-        }, 'Logging in...');
+        const response = await AuthService.postApiAuthLogin({
+          username,
+          password,
+        });
+        const { accessToken, refreshToken } = response;
+        
+        authManager.setTokens(accessToken, refreshToken);
+        OpenAPI.TOKEN = accessToken;
+        
+        navigate('/');
       } else {
-        await globalLoadingManager.withLoading(async () => {
-          await AuthService.postApiAuthRegister({
-            username,
-            password,
-          });
-        }, 'Registering...');
+        await AuthService.postApiAuthRegister({
+          username,
+          password,
+        });
         setMessage('Registration successful! Please log in.');
         setMode('login');
       }

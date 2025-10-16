@@ -9,6 +9,7 @@ import { useState } from 'react';
 function App() {
   const navigate = useNavigate();
   const userRole = authManager.getUserRole();
+  const userName = authManager.getUserName();
   const { isLoading, loadingMessage } = useGlobalLoading();
   const [showTestButton, setShowTestButton] = useState(false);
 
@@ -30,9 +31,12 @@ function App() {
         <div className="header-left">
           <h1>Work Items Management</h1>
           {userRole && (
-            <span className="user-role">
-              {userRole === 'Admin' ? '管理員' : '使用者'}
-            </span>
+            <div className="user-info">
+              <span className="user-name">{userName}</span>
+              <span className="user-role">
+                {userRole === 'Admin' ? '管理員' : '使用者'}
+              </span>
+            </div>
           )}
         </div>
         <div className="header-right">
