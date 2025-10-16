@@ -2,16 +2,14 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { UserWorkItemState } from './UserWorkItemState';
-export type WorkItem = {
+export type WorkItemDto = {
     id?: number;
     title?: string | null;
     description?: string | null;
-    status?: 'pending' | 'in-progress' | 'completed' | null;
+    status?: string | null;
     createdUser?: string | null;
     createdTime?: string;
     updatedUser?: string | null;
     updatedTime?: string | null;
-    userWorkItemStates?: Array<UserWorkItemState> | null;
 };
 

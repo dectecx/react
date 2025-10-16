@@ -1,21 +1,21 @@
 import { useState, useMemo, useEffect } from 'react';
-import type { WorkItem } from '../api/generated';
+import type { WorkItemDto, CreateWorkItemDto, UpdateWorkItemDto } from '../api/generated';
 import { WorkItemsService } from '../api/generated';
 import TodoForm from '../components/TodoForm';
 import InfoDisplay from '../components/InfoDisplay';
 import './TodoListPage.css';
 import { Link } from 'react-router-dom';
 
-type SortKey = keyof WorkItem;
+type SortKey = keyof WorkItemDto;
 type SortOrder = 'asc' | 'desc';
 
 const TodoListPage = () => {
-  const [todos, setTodos] = useState<WorkItem[]>([]);
+  const [todos, setTodos] = useState<WorkItemDto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>('createdTime');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
-  const [editingTodo, setEditingTodo] = useState<WorkItem | null>(null);
+  const [editingTodo, setEditingTodo] = useState<WorkItemDto | null>(null);
 
   useEffect(() => {
     const fetchTodos = async () => {
@@ -63,12 +63,10 @@ const TodoListPage = () => {
   };
 
   const handleAddTodo = async (
-    newTodoData: Pick<WorkItem, 'title' | 'description' | 'status'>
+    newTodoData: CreateWorkItemDto
   ) => {
     try {
-      const newTodo = await WorkItemsService.postApiWorkItems({
-        ...newTodoData,
-      });
+      const newTodo = await WorkItemsService.postApiWorkItems(newTodoData);
       setTodos([...todos, newTodo]);
     } catch (err) {
       setError('Failed to create todo.');
@@ -77,14 +75,11 @@ const TodoListPage = () => {
   };
 
   const handleUpdateTodo = async (
-    updatedTodoData: Pick<WorkItem, 'title' | 'description' | 'status'>
+    updatedTodoData: UpdateWorkItemDto
   ) => {
     if (!editingTodo || !editingTodo.id) return;
     try {
-      await WorkItemsService.putApiWorkItems(editingTodo.id, {
-        id: editingTodo.id,
-        ...updatedTodoData,
-      });
+      await WorkItemsService.putApiWorkItems(editingTodo.id, updatedTodoData);
       // Refetch list to get updated data, or update locally
       const updatedTodos = todos.map((todo) =>
         todo.id === editingTodo.id
@@ -111,7 +106,7 @@ const TodoListPage = () => {
     }
   };
 
-  const handleEdit = (todo: WorkItem) => {
+  const handleEdit = (todo: WorkItemDto) => {
     setEditingTodo(todo);
   };
 
@@ -132,16 +127,9 @@ const TodoListPage = () => {
       <h2>{editingTodo ? 'Edit Todo' : 'Add New Todo'}</h2>
       <TodoForm
         key={editingTodo ? editingTodo.id : 'add-form'}
+        isEditing={!!editingTodo}
         onSubmit={editingTodo ? handleUpdateTodo : handleAddTodo}
-        initialData={
-          editingTodo
-            ? {
-                title: editingTodo.title ?? '',
-                description: editingTodo.description ?? '',
-                status: (editingTodo.status as any) ?? 'pending',
-              }
-            : undefined
-        }
+        initialData={editingTodo ?? undefined}
       />
       {editingTodo && (
         <button

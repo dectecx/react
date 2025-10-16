@@ -111,7 +111,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/WorkItem"
+                    "$ref": "#/components/schemas/WorkItemDto"
                   }
                 }
               },
@@ -119,7 +119,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/WorkItem"
+                    "$ref": "#/components/schemas/WorkItemDto"
                   }
                 }
               },
@@ -127,7 +127,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/WorkItem"
+                    "$ref": "#/components/schemas/WorkItemDto"
                   }
                 }
               }
@@ -143,17 +143,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/WorkItem"
+                "$ref": "#/components/schemas/CreateWorkItemDto"
               }
             },
             "text/json": {
               "schema": {
-                "$ref": "#/components/schemas/WorkItem"
+                "$ref": "#/components/schemas/CreateWorkItemDto"
               }
             },
             "application/*+json": {
               "schema": {
-                "$ref": "#/components/schemas/WorkItem"
+                "$ref": "#/components/schemas/CreateWorkItemDto"
               }
             }
           }
@@ -164,17 +164,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/WorkItem"
+                  "$ref": "#/components/schemas/WorkItemDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/WorkItem"
+                  "$ref": "#/components/schemas/WorkItemDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/WorkItem"
+                  "$ref": "#/components/schemas/WorkItemDto"
                 }
               }
             }
@@ -204,17 +204,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/WorkItem"
+                  "$ref": "#/components/schemas/WorkItemDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/WorkItem"
+                  "$ref": "#/components/schemas/WorkItemDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/WorkItem"
+                  "$ref": "#/components/schemas/WorkItemDto"
                 }
               }
             }
@@ -240,17 +240,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/WorkItem"
+                "$ref": "#/components/schemas/UpdateWorkItemDto"
               }
             },
             "text/json": {
               "schema": {
-                "$ref": "#/components/schemas/WorkItem"
+                "$ref": "#/components/schemas/UpdateWorkItemDto"
               }
             },
             "application/*+json": {
               "schema": {
-                "$ref": "#/components/schemas/WorkItem"
+                "$ref": "#/components/schemas/UpdateWorkItemDto"
               }
             }
           }
@@ -299,6 +299,20 @@
         },
         "additionalProperties": false
       },
+      "CreateWorkItemDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "LoginDto": {
         "type": "object",
         "properties": {
@@ -327,96 +341,25 @@
         },
         "additionalProperties": false
       },
-      "User": {
+      "UpdateWorkItemDto": {
         "type": "object",
         "properties": {
-          "userId": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "username": {
+          "title": {
             "type": "string",
             "nullable": true
           },
-          "passwordHash": {
+          "description": {
             "type": "string",
             "nullable": true
           },
-          "createdUser": {
+          "status": {
             "type": "string",
-            "nullable": true
-          },
-          "createdTime": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "updatedUser": {
-            "type": "string",
-            "nullable": true
-          },
-          "updatedTime": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "userWorkItemStates": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/UserWorkItemState"
-            },
             "nullable": true
           }
         },
         "additionalProperties": false
       },
-      "UserWorkItemState": {
-        "type": "object",
-        "properties": {
-          "stateId": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "userId": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "workItemId": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "isChecked": {
-            "type": "boolean"
-          },
-          "isConfirmed": {
-            "type": "boolean"
-          },
-          "createdUser": {
-            "type": "string",
-            "nullable": true
-          },
-          "createdTime": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "updatedUser": {
-            "type": "string",
-            "nullable": true
-          },
-          "updatedTime": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "user": {
-            "$ref": "#/components/schemas/User"
-          },
-          "workItem": {
-            "$ref": "#/components/schemas/WorkItem"
-          }
-        },
-        "additionalProperties": false
-      },
-      "WorkItem": {
+      "WorkItemDto": {
         "type": "object",
         "properties": {
           "id": {
@@ -450,13 +393,6 @@
           "updatedTime": {
             "type": "string",
             "format": "date-time",
-            "nullable": true
-          },
-          "userWorkItemStates": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/UserWorkItemState"
-            },
             "nullable": true
           }
         },

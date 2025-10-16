@@ -1,30 +1,40 @@
 import { useState, useEffect } from 'react';
-import type { WorkItem } from '../api/generated';
+import type { CreateWorkItemDto, UpdateWorkItemDto, WorkItemDto } from '../api/generated';
 import './TodoForm.css';
 
-type FormData = Pick<WorkItem, 'title' | 'description' | 'status'>;
-
 interface TodoFormProps {
-  onSubmit: (data: FormData) => void;
-  initialData?: FormData;
+  isEditing: boolean;
+  onSubmit: (data: CreateWorkItemDto | UpdateWorkItemDto) => void;
+  initialData?: WorkItemDto;
 }
 
-const TodoForm = ({ onSubmit, initialData }: TodoFormProps) => {
-  const [title, setTitle] = useState(initialData?.title || '');
-  const [description, setDescription] = useState(
-    initialData?.description || ''
-  );
+const TodoForm = ({ isEditing, onSubmit, initialData }: TodoFormProps) => {
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
   const [status, setStatus] = useState<'pending' | 'in-progress' | 'completed'>(
-    (initialData?.status as any) || 'pending'
+    'pending'
   );
 
   useEffect(() => {
-    if (initialData) {
+    if (isEditing && initialData) {
       setTitle(initialData.title ?? '');
       setDescription(initialData.description ?? '');
-      setStatus((initialData.status as any) ?? 'pending');
+      const currentStatus = initialData.status;
+      if (
+        currentStatus === 'pending' ||
+        currentStatus === 'in-progress' ||
+        currentStatus === 'completed'
+      ) {
+        setStatus(currentStatus);
+      } else {
+        setStatus('pending');
+      }
+    } else {
+      setTitle('');
+      setDescription('');
+      setStatus('pending');
     }
-  }, [initialData]);
+  }, [isEditing, initialData]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,16 +42,11 @@ const TodoForm = ({ onSubmit, initialData }: TodoFormProps) => {
       alert('Title is required');
       return;
     }
-    onSubmit({
-      title,
-      description,
-      status,
-    });
-    // Only clear form if it's not for editing
-    if (!initialData) {
-      setTitle('');
-      setDescription('');
-      setStatus('pending');
+
+    if (isEditing) {
+      onSubmit({ title, description, status });
+    } else {
+      onSubmit({ title, description });
     }
   };
 
@@ -64,22 +69,26 @@ const TodoForm = ({ onSubmit, initialData }: TodoFormProps) => {
           onChange={(e) => setDescription(e.target.value)}
         />
       </div>
-      <div className="form-group">
-        <label htmlFor="status">Status</label>
-        <select
-          id="status"
-          value={status}
-          onChange={(e) =>
-            setStatus(e.target.value as 'pending' | 'in-progress' | 'completed')
-          }
-        >
-          <option value="pending">Pending</option>
-          <option value="in-progress">In Progress</option>
-          <option value="completed">Completed</option>
-        </select>
-      </div>
+      {isEditing && (
+        <div className="form-group">
+          <label htmlFor="status">Status</label>
+          <select
+            id="status"
+            value={status}
+            onChange={(e) =>
+              setStatus(
+                e.target.value as 'pending' | 'in-progress' | 'completed'
+              )
+            }
+          >
+            <option value="pending">Pending</option>
+            <option value="in-progress">In Progress</option>
+            <option value="completed">Completed</option>
+          </select>
+        </div>
+      )}
       <button type="submit" className="submit-button">
-        Submit
+        {isEditing ? 'Update' : 'Create'}
       </button>
     </form>
   );

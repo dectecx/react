@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import type { WorkItem } from '../api/generated';
+import type { WorkItemDto } from '../api/generated';
 import { WorkItemsService } from '../api/generated';
 
 const TodoDetailPage = () => {
   const { id } = useParams<{ id: string }>();
-  const [todo, setTodo] = useState<WorkItem | null>(null);
+  const [todo, setTodo] = useState<WorkItemDto | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
