@@ -12,6 +12,7 @@ import InfoDisplay from '../components/InfoDisplay';
 import Toast from '../components/Toast';
 import TodoDetailModal from '../components/TodoDetailModal';
 import { authManager } from '../services/authManager';
+import { globalLoadingManager } from '../services/globalLoadingManager';
 import { useAsyncAction } from '../hooks/useAsyncAction';
 import './TodoListPage.css';
 
@@ -44,14 +45,19 @@ const TodoListPage: React.FC = () => {
   const isAdmin = authManager.isAdmin();
   const { isExecuting: isConfirming, executeAsync: executeConfirmAsync } = useAsyncAction();
   const { isExecuting: isUndoing, executeAsync: executeUndoAsync } = useAsyncAction();
+  const { executeAsync: executeAddAsync } = useAsyncAction();
+  const { executeAsync: executeUpdateAsync } = useAsyncAction();
+  const { isExecuting: isDeleting, executeAsync: executeDeleteAsync } = useAsyncAction();
 
   useEffect(() => {
     const fetchTodos = async () => {
       try {
         setToastInfo(null);
         setIsLoading(true);
-        const fetchedTodos = await WorkItemsService.getApiWorkItems();
-        setTodos(fetchedTodos);
+        await globalLoadingManager.withLoading(async () => {
+          const fetchedTodos = await WorkItemsService.getApiWorkItems();
+          setTodos(fetchedTodos);
+        }, 'Loading work items...');
       } catch (err) {
         setToastInfo({ message: 'Failed to fetch todos.', type: 'error' });
         console.error(err);
@@ -89,22 +95,32 @@ const TodoListPage: React.FC = () => {
   };
 
   const handleAddTodo = async (newTodoData: CreateWorkItemDto) => {
-    try {
+    const result = await executeAddAsync(async () => {
       setToastInfo(null);
-      const newTodo = await WorkItemsService.postApiWorkItems(newTodoData);
-      setTodos([...todos, newTodo]);
+      await globalLoadingManager.withLoading(async () => {
+        const newTodo = await WorkItemsService.postApiWorkItems(newTodoData);
+        setTodos([...todos, newTodo]);
+      }, 'Creating work item...');
       setToastInfo({ message: 'Successfully added todo!', type: 'success' });
-    } catch (err) {
+    });
+
+    if (result === null) return; // Prevented duplicate execution
+
+    // Handle errors
+    if (result && result instanceof Error) {
       setToastInfo({ message: 'Failed to create todo.', type: 'error' });
-      console.error(err);
+      console.error(result);
     }
   };
 
   const handleUpdateTodo = async (updatedTodoData: UpdateWorkItemDto) => {
     if (!editingTodo || !editingTodo.id) return;
-    try {
+    
+    const result = await executeUpdateAsync(async () => {
       setToastInfo(null);
-      await WorkItemsService.putApiWorkItems(editingTodo.id, updatedTodoData);
+      await globalLoadingManager.withLoading(async () => {
+        await WorkItemsService.putApiWorkItems(editingTodo.id!, updatedTodoData);
+      }, 'Updating work item...');
 
       const updatedTodos = todos.map((todo) =>
         todo.id === editingTodo.id
@@ -114,22 +130,34 @@ const TodoListPage: React.FC = () => {
       setTodos(updatedTodos);
       setEditingTodo(null);
       setToastInfo({ message: 'Successfully updated todo!', type: 'success' });
-    } catch (err) {
+    });
+
+    if (result === null) return; // Prevented duplicate execution
+
+    // Handle errors
+    if (result && result instanceof Error) {
       setToastInfo({ message: 'Failed to update todo.', type: 'error' });
-      console.error(err);
+      console.error(result);
     }
   };
 
   const handleDeleteTodo = async (id: number) => {
     if (window.confirm('Are you sure you want to delete this todo?')) {
-      try {
+      const result = await executeDeleteAsync(async () => {
         setToastInfo(null);
-        await WorkItemsService.deleteApiWorkItems(id);
+        await globalLoadingManager.withLoading(async () => {
+          await WorkItemsService.deleteApiWorkItems(id);
+        }, 'Deleting work item...');
         setTodos(todos.filter((todo) => todo.id !== id));
         setToastInfo({ message: 'Successfully deleted todo!', type: 'success' });
-      } catch (err) {
+      });
+
+      if (result === null) return; // Prevented duplicate execution
+
+      // Handle errors
+      if (result && result instanceof Error) {
         setToastInfo({ message: 'Failed to delete todo.', type: 'error' });
-        console.error(err);
+        console.error(result);
       }
     }
   };
@@ -188,9 +216,11 @@ const TodoListPage: React.FC = () => {
         return;
       }
 
-      await UserStatesService.postApiUserStatesConfirm({
-        states: statesToConfirm,
-      });
+      await globalLoadingManager.withLoading(async () => {
+        await UserStatesService.postApiUserStatesConfirm({
+          states: statesToConfirm,
+        });
+      }, 'Confirming items...');
       
       setToastInfo({
         message: `Successfully confirmed ${statesToConfirm.length} item(s).`,
@@ -216,9 +246,11 @@ const TodoListPage: React.FC = () => {
     if (window.confirm('確定要將此項目標記回「待確認」嗎？')) {
       const result = await executeUndoAsync(async () => {
         setToastInfo(null);
-        await UserStatesService.postApiUserStatesConfirm({
-          states: [{ workItemId: itemId, isConfirmed: false }],
-        });
+        await globalLoadingManager.withLoading(async () => {
+          await UserStatesService.postApiUserStatesConfirm({
+            states: [{ workItemId: itemId, isConfirmed: false }],
+          });
+        }, 'Undoing confirmation...');
         setToastInfo({ message: '已將項目標記為待確認', type: 'success' });
         // Refresh the list to get updated status
         const updatedTodos = await WorkItemsService.getApiWorkItems();
@@ -328,9 +360,10 @@ const TodoListPage: React.FC = () => {
                             type="button"
                             className="action-button"
                             onClick={() => todo.id && handleDeleteTodo(todo.id)}
+                            disabled={isDeleting}
                           >
                             <span className="icon">🗑️</span>
-                            <span className="text">Delete</span>
+                            <span className="text">{isDeleting ? 'Deleting...' : 'Delete'}</span>
                           </button>
                         </>
                       )}

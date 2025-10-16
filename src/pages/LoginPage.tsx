@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthService, OpenAPI, ApiError } from '../api/generated';
-import type { LoginResponse } from '../types/auth';
 import './LoginPage.css';
 import { authManager } from '../services/authManager';
+import { globalLoadingManager } from '../services/globalLoadingManager';
+import { useAsyncAction } from '../hooks/useAsyncAction';
 
 type FormMode = 'login' | 'register';
 
@@ -14,6 +15,7 @@ const LoginPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const navigate = useNavigate();
+  const { isExecuting, executeAsync } = useAsyncAction();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,33 +27,42 @@ const LoginPage = () => {
       return;
     }
 
-    try {
+    const result = await executeAsync(async () => {
       if (mode === 'login') {
-        const response = await AuthService.postApiAuthLogin({
-          username,
-          password,
-        });
-        const { accessToken, refreshToken } = response;
-        
-        authManager.setTokens(accessToken, refreshToken);
-        OpenAPI.TOKEN = accessToken;
-        
-        navigate('/');
+        await globalLoadingManager.withLoading(async () => {
+          const response = await AuthService.postApiAuthLogin({
+            username,
+            password,
+          });
+          const { accessToken, refreshToken } = response;
+          
+          authManager.setTokens(accessToken, refreshToken);
+          OpenAPI.TOKEN = accessToken;
+          
+          navigate('/');
+        }, 'Logging in...');
       } else {
-        await AuthService.postApiAuthRegister({
-          username,
-          password,
-        });
+        await globalLoadingManager.withLoading(async () => {
+          await AuthService.postApiAuthRegister({
+            username,
+            password,
+          });
+        }, 'Registering...');
         setMessage('Registration successful! Please log in.');
         setMode('login');
       }
-    } catch (err) {
-      if (err instanceof ApiError) {
-        setError(err.body?.message || `An error occurred: ${err.statusText}`);
+    });
+
+    if (result === null) return; // Prevented duplicate execution
+
+    // Handle errors
+    if (result && result instanceof Error) {
+      if (result instanceof ApiError) {
+        setError(result.body?.message || `An error occurred: ${result.statusText}`);
       } else {
         setError('An unexpected error occurred.');
       }
-      console.error(err);
+      console.error(result);
     }
   };
 
@@ -86,8 +97,8 @@ const LoginPage = () => {
               onChange={(e) => setPassword(e.target.value)}
             />
           </div>
-          <button type="submit" className="submit-button">
-            {mode === 'login' ? 'Login' : 'Register'}
+          <button type="submit" className="submit-button" disabled={isExecuting}>
+            {isExecuting ? (mode === 'login' ? 'Logging in...' : 'Registering...') : (mode === 'login' ? 'Login' : 'Register')}
           </button>
         </form>
         <button onClick={toggleMode} className="toggle-mode-button">

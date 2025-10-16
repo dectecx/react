@@ -4,6 +4,8 @@ import type { WorkItemDto, CreateWorkItemDto, UpdateWorkItemDto } from '../api/g
 import { WorkItemsService } from '../api/generated';
 import InfoDisplay from '../components/InfoDisplay';
 import Toast from '../components/Toast';
+import { globalLoadingManager } from '../services/globalLoadingManager';
+import { useAsyncAction } from '../hooks/useAsyncAction';
 import './WorkItemEditPage.css';
 
 type ToastInfo = {
@@ -23,20 +25,24 @@ const WorkItemEditPage: React.FC = () => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
 
+  const { isExecuting, executeAsync } = useAsyncAction();
+
   useEffect(() => {
     if (isEditMode && id) {
       const fetchWorkItem = async () => {
         try {
           setIsLoading(true);
           setToastInfo(null);
-          const fetchedItem = await WorkItemsService.getApiWorkItems1(Number(id));
-          if (fetchedItem) {
-            setWorkItem(fetchedItem);
-            setTitle(fetchedItem.title ?? '');
-            setDescription(fetchedItem.description ?? '');
-          } else {
-            setToastInfo({ message: 'Work item not found.', type: 'error' });
-          }
+          await globalLoadingManager.withLoading(async () => {
+            const fetchedItem = await WorkItemsService.getApiWorkItems1(Number(id));
+            if (fetchedItem) {
+              setWorkItem(fetchedItem);
+              setTitle(fetchedItem.title ?? '');
+              setDescription(fetchedItem.description ?? '');
+            } else {
+              setToastInfo({ message: 'Work item not found.', type: 'error' });
+            }
+          }, 'Loading work item...');
         } catch (err) {
           setToastInfo({ message: 'Failed to fetch work item details.', type: 'error' });
           console.error(err);
@@ -56,16 +62,20 @@ const WorkItemEditPage: React.FC = () => {
       return;
     }
 
-    try {
+    const result = await executeAsync(async () => {
       setToastInfo(null);
       
       if (isEditMode && id) {
-        const updateData: UpdateWorkItemDto = { title, description };
-        await WorkItemsService.putApiWorkItems(Number(id), updateData);
+        await globalLoadingManager.withLoading(async () => {
+          const updateData: UpdateWorkItemDto = { title, description };
+          await WorkItemsService.putApiWorkItems(Number(id), updateData);
+        }, 'Updating work item...');
         setToastInfo({ message: 'Work item updated successfully!', type: 'success' });
       } else {
-        const createData: CreateWorkItemDto = { title, description };
-        await WorkItemsService.postApiWorkItems(createData);
+        await globalLoadingManager.withLoading(async () => {
+          const createData: CreateWorkItemDto = { title, description };
+          await WorkItemsService.postApiWorkItems(createData);
+        }, 'Creating work item...');
         setToastInfo({ message: 'Work item created successfully!', type: 'success' });
       }
       
@@ -73,13 +83,17 @@ const WorkItemEditPage: React.FC = () => {
       setTimeout(() => {
         navigate('/');
       }, 1500);
-      
-    } catch (err) {
+    });
+
+    if (result === null) return; // Prevented duplicate execution
+
+    // Handle errors
+    if (result && result instanceof Error) {
       setToastInfo({ 
         message: isEditMode ? 'Failed to update work item.' : 'Failed to create work item.', 
         type: 'error' 
       });
-      console.error(err);
+      console.error(result);
     }
   };
 
@@ -137,10 +151,10 @@ const WorkItemEditPage: React.FC = () => {
         </div>
 
         <div className="form-actions">
-          <button type="submit" className="submit-button">
-            {isEditMode ? 'Update' : 'Create'}
+          <button type="submit" className="submit-button" disabled={isExecuting}>
+            {isExecuting ? (isEditMode ? 'Updating...' : 'Creating...') : (isEditMode ? 'Update' : 'Create')}
           </button>
-          <button type="button" onClick={handleCancel} className="cancel-button">
+          <button type="button" onClick={handleCancel} className="cancel-button" disabled={isExecuting}>
             Cancel
           </button>
         </div>
