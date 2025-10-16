@@ -193,6 +193,10 @@ const TodoListPage: React.FC = () => {
         type: 'success',
       });
       setCheckedItems({});
+      
+      // Refresh the list to get updated status
+      const updatedTodos = await WorkItemsService.getApiWorkItems();
+      setTodos(updatedTodos);
     } catch (err) {
       setToastInfo({ message: "Failed to confirm items. Please try again.", type: 'error' });
       console.error(err);
