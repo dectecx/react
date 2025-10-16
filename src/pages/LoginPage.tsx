@@ -4,6 +4,7 @@ import { AuthService, OpenAPI, ApiError } from '../api/generated';
 import './LoginPage.css';
 import { authManager } from '../services/authManager';
 import { useAsyncAction } from '../hooks/useAsyncAction';
+import { useI18n } from '../hooks/useI18n';
 
 type FormMode = 'login' | 'register';
 
@@ -14,7 +15,8 @@ const LoginPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const navigate = useNavigate();
-  const { isExecuting, executeAsync } = useAsyncAction(mode === 'login' ? 'Logging in...' : 'Registering...');
+  const { t, currentLanguage, changeLanguage } = useI18n();
+  const { isExecuting, executeAsync } = useAsyncAction(mode === 'login' ? t('loggingIn') : t('registering'));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,7 +24,7 @@ const LoginPage = () => {
     setMessage(null);
 
     if (!username || !password) {
-      setError('Username and password are required.');
+      setError(t('usernameRequired'));
       return;
     }
 
@@ -43,7 +45,7 @@ const LoginPage = () => {
           username,
           password,
         });
-        setMessage('Registration successful! Please log in.');
+        setMessage(t('registerSuccess'));
         setMode('login');
       }
     });
@@ -55,7 +57,7 @@ const LoginPage = () => {
       if (result instanceof ApiError) {
         setError(result.body?.message || `An error occurred: ${result.statusText}`);
       } else {
-        setError('An unexpected error occurred.');
+        setError(mode === 'login' ? t('loginError') : t('registerError'));
       }
       console.error(result);
     }
@@ -67,15 +69,28 @@ const LoginPage = () => {
     setMessage(null);
   };
 
+  const toggleLanguage = () => {
+    changeLanguage(currentLanguage === 'zh-TW' ? 'en-US' : 'zh-TW');
+  };
+
   return (
     <div className="login-page-container">
+      <div className="login-language-toggle">
+        <button 
+          onClick={toggleLanguage} 
+          className="language-toggle-button"
+          title={currentLanguage === 'zh-TW' ? 'Switch to English' : '切換到中文'}
+        >
+          {currentLanguage === 'zh-TW' ? '🇺🇸' : '🇹🇼'}
+        </button>
+      </div>
       <div className="login-form-card">
-        <h2>{mode === 'login' ? 'Login' : 'Register'}</h2>
+        <h2>{mode === 'login' ? t('login') : t('register')}</h2>
         <form onSubmit={handleSubmit}>
           {error && <p className="error-message">{error}</p>}
           {message && <p className="success-message">{message}</p>}
           <div className="form-group">
-            <label htmlFor="username">Username</label>
+            <label htmlFor="username">{t('username')}</label>
             <input
               id="username"
               type="text"
@@ -84,7 +99,7 @@ const LoginPage = () => {
             />
           </div>
           <div className="form-group">
-            <label htmlFor="password">Password</label>
+            <label htmlFor="password">{t('password')}</label>
             <input
               id="password"
               type="password"
@@ -93,13 +108,13 @@ const LoginPage = () => {
             />
           </div>
           <button type="submit" className="submit-button" disabled={isExecuting}>
-            {isExecuting ? (mode === 'login' ? 'Logging in...' : 'Registering...') : (mode === 'login' ? 'Login' : 'Register')}
+            {isExecuting ? (mode === 'login' ? t('loggingIn') : t('registering')) : (mode === 'login' ? t('loginButton') : t('registerButton'))}
           </button>
         </form>
         <button onClick={toggleMode} className="toggle-mode-button">
           {mode === 'login'
-            ? 'Need an account? Register'
-            : 'Already have an account? Login'}
+            ? t('needAccount')
+            : t('alreadyHaveAccount')}
         </button>
       </div>
     </div>

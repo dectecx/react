@@ -5,6 +5,7 @@ import { useGlobalLoading } from '../services/globalLoadingManager';
 import { globalLoadingManager } from '../services/globalLoadingManager';
 import LoadingOverlay from '../components/LoadingOverlay';
 import { useState } from 'react';
+import { useI18n } from '../hooks/useI18n';
 
 function App() {
   const navigate = useNavigate();
@@ -12,6 +13,7 @@ function App() {
   const userName = authManager.getUserName();
   const { isLoading, loadingMessage } = useGlobalLoading();
   const [showTestButton, setShowTestButton] = useState(false);
+  const { t, currentLanguage, changeLanguage } = useI18n();
 
   const handleLogout = () => {
     authManager.logout(navigate);
@@ -22,19 +24,23 @@ function App() {
     await globalLoadingManager.withLoading(async () => {
       // 模擬 API 呼叫
       await new Promise(resolve => setTimeout(resolve, 2000));
-    }, 'Testing Loading...');
+    }, t('testLoading'));
+  };
+
+  const toggleLanguage = () => {
+    changeLanguage(currentLanguage === 'zh-TW' ? 'en-US' : 'zh-TW');
   };
 
   return (
     <div className="app-layout">
       <header className="app-header">
         <div className="header-left">
-          <h1>Work Items Management</h1>
+          <h1>{t('appTitle')}</h1>
           {userRole && (
             <div className="user-info">
               <span className="user-name">{userName}</span>
               <span className="user-role">
-                {userRole === 'Admin' ? '管理員' : '使用者'}
+                {userRole === 'Admin' ? t('admin') : t('user')}
               </span>
             </div>
           )}
@@ -43,17 +49,24 @@ function App() {
           <button 
             onClick={() => setShowTestButton(!showTestButton)} 
             className="toggle-test-button"
-            title={showTestButton ? "隱藏測試按鈕" : "顯示測試按鈕"}
+            title={showTestButton ? t('hideTestButton') : t('showTestButton')}
           >
             {showTestButton ? '🔽' : '🔼'}
           </button>
           {showTestButton && (
             <button onClick={testLoading} className="test-loading-button">
-              Test Loading
+              {t('testLoading')}
             </button>
           )}
+          <button 
+            onClick={toggleLanguage} 
+            className="language-toggle-button"
+            title={currentLanguage === 'zh-TW' ? 'Switch to English' : '切換到中文'}
+          >
+            {currentLanguage === 'zh-TW' ? '🇺🇸' : '🇹🇼'}
+          </button>
           <button onClick={handleLogout} className="logout-button">
-            Logout
+            {t('logout')}
           </button>
         </div>
       </header>

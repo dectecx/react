@@ -14,6 +14,7 @@ import TodoDetailModal from '../components/TodoDetailModal';
 import { authManager } from '../services/authManager';
 import { globalLoadingManager } from '../services/globalLoadingManager';
 import { useAsyncAction } from '../hooks/useAsyncAction';
+import { useI18n } from '../hooks/useI18n';
 import './TodoListPage.css';
 
 type SortKey = keyof WorkItemDto;
@@ -43,21 +44,22 @@ const TodoListPage: React.FC = () => {
   const [checkedItems, setCheckedItems] = useState<Record<number, boolean>>({});
 
   const isAdmin = authManager.isAdmin();
-  const { isExecuting: isConfirming, executeAsync: executeConfirmAsync } = useAsyncAction('Confirming items...');
-  const { isExecuting: isUndoing, executeAsync: executeUndoAsync } = useAsyncAction('Undoing confirmation...');
-  const { executeAsync: executeAddAsync } = useAsyncAction('Creating work item...');
-  const { executeAsync: executeUpdateAsync } = useAsyncAction('Updating work item...');
-  const { isExecuting: isDeleting, executeAsync: executeDeleteAsync } = useAsyncAction('Deleting work item...');
+  const { t } = useI18n();
+  const { isExecuting: isConfirming, executeAsync: executeConfirmAsync } = useAsyncAction(t('confirmingItems'));
+  const { isExecuting: isUndoing, executeAsync: executeUndoAsync } = useAsyncAction(t('undoingConfirmation'));
+  const { executeAsync: executeAddAsync } = useAsyncAction(t('creatingWorkItem'));
+  const { executeAsync: executeUpdateAsync } = useAsyncAction(t('updatingWorkItem'));
+  const { isExecuting: isDeleting, executeAsync: executeDeleteAsync } = useAsyncAction(t('deletingWorkItem'));
 
   useEffect(() => {
     const fetchTodos = async () => {
       try {
         setToastInfo(null);
         setIsLoading(true);
-        await globalLoadingManager.withLoading(async () => {
-          const fetchedTodos = await WorkItemsService.getApiWorkItems();
-          setTodos(fetchedTodos);
-        }, 'Loading work items...');
+                await globalLoadingManager.withLoading(async () => {
+                  const fetchedTodos = await WorkItemsService.getApiWorkItems();
+                  setTodos(fetchedTodos);
+                }, t('loadingWorkItems'));
       } catch (err) {
         setToastInfo({ message: 'Failed to fetch todos.', type: 'error' });
         console.error(err);
