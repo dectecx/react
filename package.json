@@ -6,11 +6,13 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "generate:api": "openapi --input ./swagger.json --output ./src/api/generated --client axios"
   },
   "devDependencies": {
-    "@types/react": "^19.2.2",
+    "@types/react": "^18.3.5",
     "@types/react-dom": "^19.2.2",
+    "openapi-typescript-codegen": "^0.29.0",
     "typescript": "~5.9.3",
     "vite": "^7.1.7"
   },

@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import type { Todo } from '../types/todo';
-import { todoService } from '../api/todoService';
+import type { WorkItem } from '../api/generated';
+import { WorkItemsService } from '../api/generated';
 
 const TodoDetailPage = () => {
   const { id } = useParams<{ id: string }>();
-  const [todo, setTodo] = useState<Todo | null>(null);
+  const [todo, setTodo] = useState<WorkItem | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -15,7 +15,7 @@ const TodoDetailPage = () => {
       try {
         setIsLoading(true);
         setError(null);
-        const fetchedTodo = await todoService.getTodoById(Number(id));
+        const fetchedTodo = await WorkItemsService.getApiWorkItems1(Number(id));
         if (fetchedTodo) {
           setTodo(fetchedTodo);
         } else {
@@ -64,11 +64,16 @@ const TodoDetailPage = () => {
         <strong>狀態:</strong> {todo.status}
       </p>
       <p>
-        <strong>建立時間:</strong> {new Date(todo.createdAt).toLocaleString()}
+        <strong>建立時間:</strong>{' '}
+        {todo.createdTime
+          ? new Date(todo.createdTime).toLocaleString()
+          : 'N/A'}
       </p>
       <p>
         <strong>最後更新時間:</strong>{' '}
-        {new Date(todo.updatedAt).toLocaleString()}
+        {todo.updatedTime
+          ? new Date(todo.updatedTime).toLocaleString()
+          : 'N/A'}
       </p>
       <br />
       <Link to="/">Back to List</Link>

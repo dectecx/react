@@ -1,27 +1,27 @@
 import { useState, useMemo, useEffect } from 'react';
-import type { Todo } from '../types/todo';
+import type { WorkItem } from '../api/generated';
+import { WorkItemsService } from '../api/generated';
 import TodoForm from '../components/TodoForm';
 import './TodoListPage.css';
 import { Link } from 'react-router-dom';
-import { todoService } from '../api/todoService';
 
-type SortKey = keyof Todo;
+type SortKey = keyof WorkItem;
 type SortOrder = 'asc' | 'desc';
 
 const TodoListPage = () => {
-  const [todos, setTodos] = useState<Todo[]>([]);
+  const [todos, setTodos] = useState<WorkItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [sortKey, setSortKey] = useState<SortKey>('createdAt');
+  const [sortKey, setSortKey] = useState<SortKey>('createdTime');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
-  const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
+  const [editingTodo, setEditingTodo] = useState<WorkItem | null>(null);
 
   useEffect(() => {
     const fetchTodos = async () => {
       try {
         setIsLoading(true);
         setError(null);
-        const fetchedTodos = await todoService.getTodos();
+        const fetchedTodos = await WorkItemsService.getApiWorkItems();
         setTodos(fetchedTodos);
       } catch (err) {
         setError('Failed to fetch todos.');
@@ -35,10 +35,16 @@ const TodoListPage = () => {
 
   const sortedTodos = useMemo(() => {
     const sorted = [...todos].sort((a, b) => {
-      if (a[sortKey] < b[sortKey]) {
+      const valA = a[sortKey];
+      const valB = b[sortKey];
+
+      if (valA === null || valA === undefined) return 1;
+      if (valB === null || valB === undefined) return -1;
+
+      if (valA < valB) {
         return sortOrder === 'asc' ? -1 : 1;
       }
-      if (a[sortKey] > b[sortKey]) {
+      if (valA > valB) {
         return sortOrder === 'asc' ? 1 : -1;
       }
       return 0;
@@ -56,10 +62,12 @@ const TodoListPage = () => {
   };
 
   const handleAddTodo = async (
-    newTodoData: Omit<Todo, 'id' | 'createdAt' | 'updatedAt'>
+    newTodoData: Pick<WorkItem, 'title' | 'description' | 'status'>
   ) => {
     try {
-      const newTodo = await todoService.createTodo(newTodoData);
+      const newTodo = await WorkItemsService.postApiWorkItems({
+        ...newTodoData,
+      });
       setTodos([...todos, newTodo]);
     } catch (err) {
       setError('Failed to create todo.');
@@ -68,21 +76,21 @@ const TodoListPage = () => {
   };
 
   const handleUpdateTodo = async (
-    updatedTodoData: Omit<Todo, 'id' | 'createdAt' | 'updatedAt'>
+    updatedTodoData: Pick<WorkItem, 'title' | 'description' | 'status'>
   ) => {
-    if (!editingTodo) return;
+    if (!editingTodo || !editingTodo.id) return;
     try {
-      const updatedTodo = await todoService.updateTodo(
-        editingTodo.id,
-        updatedTodoData
+      await WorkItemsService.putApiWorkItems(editingTodo.id, {
+        id: editingTodo.id,
+        ...updatedTodoData,
+      });
+      // Refetch list to get updated data, or update locally
+      const updatedTodos = todos.map((todo) =>
+        todo.id === editingTodo.id
+          ? { ...todo, ...updatedTodoData, updatedTime: new Date().toISOString() }
+          : todo
       );
-      if (updatedTodo) {
-        setTodos(
-          todos.map((todo) =>
-            todo.id === editingTodo.id ? updatedTodo : todo
-          )
-        );
-      }
+      setTodos(updatedTodos);
       setEditingTodo(null);
     } catch (err) {
       setError('Failed to update todo.');
@@ -93,7 +101,7 @@ const TodoListPage = () => {
   const handleDeleteTodo = async (id: number) => {
     if (window.confirm('Are you sure you want to delete this todo?')) {
       try {
-        await todoService.deleteTodo(id);
+        await WorkItemsService.deleteApiWorkItems(id);
         setTodos(todos.filter((todo) => todo.id !== id));
       } catch (err) {
         setError('Failed to delete todo.');
@@ -102,7 +110,7 @@ const TodoListPage = () => {
     }
   };
 
-  const handleEdit = (todo: Todo) => {
+  const handleEdit = (todo: WorkItem) => {
     setEditingTodo(todo);
   };
 
@@ -124,7 +132,15 @@ const TodoListPage = () => {
       <TodoForm
         key={editingTodo ? editingTodo.id : 'add-form'}
         onSubmit={editingTodo ? handleUpdateTodo : handleAddTodo}
-        initialData={editingTodo ?? undefined}
+        initialData={
+          editingTodo
+            ? {
+                title: editingTodo.title ?? '',
+                description: editingTodo.description ?? '',
+                status: (editingTodo.status as any) ?? 'pending',
+              }
+            : undefined
+        }
       />
       {editingTodo && (
         <button type="button" onClick={handleCancelEdit}>
@@ -162,7 +178,7 @@ const TodoListPage = () => {
                 </button>
                 <button
                   type="button"
-                  onClick={() => handleDeleteTodo(todo.id)}
+                  onClick={() => todo.id && handleDeleteTodo(todo.id)}
                   style={{ marginLeft: '0.5rem' }}
                 >
                   Delete

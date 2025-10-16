@@ -1,18 +1,30 @@
-import { useState } from 'react';
-import type { Todo } from '../types/todo';
+import { useState, useEffect } from 'react';
+import type { WorkItem } from '../api/generated';
 import './TodoForm.css';
 
+type FormData = Pick<WorkItem, 'title' | 'description' | 'status'>;
+
 interface TodoFormProps {
-  onSubmit: (todo: Omit<Todo, 'id' | 'createdAt' | 'updatedAt'>) => void;
-  initialData?: Omit<Todo, 'id' | 'createdAt' | 'updatedAt'>;
+  onSubmit: (data: FormData) => void;
+  initialData?: FormData;
 }
 
 const TodoForm = ({ onSubmit, initialData }: TodoFormProps) => {
   const [title, setTitle] = useState(initialData?.title || '');
-  const [description, setDescription] = useState(initialData?.description || '');
-  const [status, setStatus] = useState<'pending' | 'in-progress' | 'completed'>(
-    initialData?.status || 'pending'
+  const [description, setDescription] = useState(
+    initialData?.description || ''
   );
+  const [status, setStatus] = useState<'pending' | 'in-progress' | 'completed'>(
+    (initialData?.status as any) || 'pending'
+  );
+
+  useEffect(() => {
+    if (initialData) {
+      setTitle(initialData.title ?? '');
+      setDescription(initialData.description ?? '');
+      setStatus((initialData.status as any) ?? 'pending');
+    }
+  }, [initialData]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,10 +32,17 @@ const TodoForm = ({ onSubmit, initialData }: TodoFormProps) => {
       alert('Title is required');
       return;
     }
-    onSubmit({ title, description, status });
-    setTitle('');
-    setDescription('');
-    setStatus('pending');
+    onSubmit({
+      title,
+      description,
+      status,
+    });
+    // Only clear form if it's not for editing
+    if (!initialData) {
+      setTitle('');
+      setDescription('');
+      setStatus('pending');
+    }
   };
 
   return (
