@@ -5,10 +5,13 @@ import router from './config/router';
 import './style.css';
 import { OpenAPI } from './api/generated';
 
+// Set the base URL for the API client
+OpenAPI.BASE = 'https://localhost:7194';
+
 // Check for auth token on startup
 const token = localStorage.getItem('authToken');
 if (token) {
-  OpenAPI.TOKEN = `Bearer ${token}`;
+  OpenAPI.TOKEN = token;
 }
 
 ReactDOM.createRoot(document.getElementById('root')!).render(

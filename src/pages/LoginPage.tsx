@@ -36,7 +36,7 @@ const LoginPage = () => {
         if (typeof accessToken === 'string' && accessToken) {
           localStorage.setItem('authToken', accessToken);
           localStorage.setItem('refreshToken', refreshToken); // Store refresh token
-          OpenAPI.TOKEN = `Bearer ${accessToken}`;
+          OpenAPI.TOKEN = accessToken;
           navigate('/');
         } else {
           setError(
