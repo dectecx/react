@@ -1,20 +1,61 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { RouterProvider } from 'react-router-dom';
-import router from './config/router';
+import {
+  createBrowserRouter,
+  RouterProvider,
+} from 'react-router-dom';
+import App from './pages/App.tsx';
+import LoginPage from './pages/LoginPage.tsx';
+import TodoListPage from './pages/TodoListPage.tsx';
+import TodoDetailPage from './pages/TodoDetailPage.tsx';
+import ProtectedRoute from './components/ProtectedRoute';
 import './style.css';
 import { OpenAPI } from './api/generated';
+import setupAxiosInterceptor, { setNavigate } from './api/axiosInterceptor.ts';
+import { authManager } from './services/authManager.ts';
 
-// Set the base URL for the API client
+// Set API base URL
 OpenAPI.BASE = 'https://localhost:7194';
 
-// Check for auth token on startup
-const token = localStorage.getItem('authToken');
+// Initial token setup
+const { token } = authManager.getTokens();
 if (token) {
   OpenAPI.TOKEN = token;
 }
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
+const router = createBrowserRouter([
+  {
+    path: '/',
+    element: (
+      <ProtectedRoute>
+        <App />
+      </ProtectedRoute>
+    ),
+    children: [
+      {
+        index: true,
+        element: <TodoListPage />,
+      },
+      {
+        path: 'todo/:id',
+        element: <TodoDetailPage />,
+      },
+    ],
+  },
+  {
+    path: '/login',
+    element: <LoginPage />,
+  },
+]);
+
+// Set the navigate function for the interceptor to use
+setNavigate(router.navigate);
+
+// Call the setup function to activate the interceptor
+setupAxiosInterceptor();
+
+const root = ReactDOM.createRoot(document.getElementById('root')!);
+root.render(
   <React.StrictMode>
     <RouterProvider router={router} />
   </React.StrictMode>

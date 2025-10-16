@@ -3,6 +3,8 @@
 /* tslint:disable */
 /* eslint-disable */
 import type { LoginDto } from '../models/LoginDto';
+import type { LogoutRequestDto } from '../models/LogoutRequestDto';
+import type { RefreshTokenRequestDto } from '../models/RefreshTokenRequestDto';
 import type { RegisterDto } from '../models/RegisterDto';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import { OpenAPI } from '../core/OpenAPI';
@@ -34,6 +36,36 @@ export class AuthService {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/api/Auth/register',
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * @param requestBody
+     * @returns any OK
+     * @throws ApiError
+     */
+    public static postApiAuthRefresh(
+        requestBody?: RefreshTokenRequestDto,
+    ): CancelablePromise<any> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/Auth/refresh',
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * @param requestBody
+     * @returns any OK
+     * @throws ApiError
+     */
+    public static postApiAuthLogout(
+        requestBody?: LogoutRequestDto,
+    ): CancelablePromise<any> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/Auth/logout',
             body: requestBody,
             mediaType: 'application/json',
         });

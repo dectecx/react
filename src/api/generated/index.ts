@@ -10,6 +10,8 @@ export type { OpenAPIConfig } from './core/OpenAPI';
 export type { ConfirmStateDto } from './models/ConfirmStateDto';
 export type { CreateWorkItemDto } from './models/CreateWorkItemDto';
 export type { LoginDto } from './models/LoginDto';
+export type { LogoutRequestDto } from './models/LogoutRequestDto';
+export type { RefreshTokenRequestDto } from './models/RefreshTokenRequestDto';
 export type { RegisterDto } from './models/RegisterDto';
 export type { UpdateWorkItemDto } from './models/UpdateWorkItemDto';
 export type { WorkItemDto } from './models/WorkItemDto';

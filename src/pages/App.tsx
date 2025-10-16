@@ -1,18 +1,16 @@
 import { Outlet, useNavigate } from 'react-router-dom';
 import './App.css';
 import { OpenAPI } from '../api/generated';
+import { authManager } from '../services/authManager';
 
 function App() {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    // Clear token from storage and API client
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('refreshToken');
-    OpenAPI.TOKEN = undefined;
-
-    // Navigate to login page
-    navigate('/login');
+    // The authManager handles token clearing and OpenAPI.TOKEN reset internally is a good practice,
+    // but the logout function in authManager is designed to take navigate.
+    // So we'll call it here. The OpenAPI.TOKEN clearing will happen via the interceptor or can be added to authManager.
+    authManager.logout(navigate);
   };
 
   return (

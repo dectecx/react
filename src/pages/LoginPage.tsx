@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { AuthService, OpenAPI, ApiError } from '../api/generated';
 import type { LoginResponse } from '../types/auth';
 import './LoginPage.css';
+import { authManager } from '../services/authManager';
 
 type FormMode = 'login' | 'register';
 
@@ -26,23 +27,16 @@ const LoginPage = () => {
 
     try {
       if (mode === 'login') {
-        const response = (await AuthService.postApiAuthLogin({
+        const response = await AuthService.postApiAuthLogin({
           username,
           password,
-        })) as LoginResponse;
-
+        });
         const { accessToken, refreshToken } = response;
-
-        if (typeof accessToken === 'string' && accessToken) {
-          localStorage.setItem('authToken', accessToken);
-          localStorage.setItem('refreshToken', refreshToken); // Store refresh token
-          OpenAPI.TOKEN = accessToken;
-          navigate('/');
-        } else {
-          setError(
-            'Login successful, but no authentication token was received.'
-          );
-        }
+        
+        authManager.setTokens(accessToken, refreshToken);
+        OpenAPI.TOKEN = accessToken;
+        
+        navigate('/');
       } else {
         await AuthService.postApiAuthRegister({
           username,
