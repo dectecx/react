@@ -3,23 +3,29 @@ import App from '../pages/App';
 import LoginPage from '../pages/LoginPage';
 import TodoListPage from '../pages/TodoListPage';
 import TodoDetailPage from '../pages/TodoDetailPage';
+import PrivateRoute from '../components/PrivateRoute';
 
 const router = createBrowserRouter([
   {
+    path: '/login',
+    element: <LoginPage />,
+  },
+  {
     path: '/',
-    element: <App />,
+    element: <PrivateRoute />,
     children: [
       {
-        index: true,
-        element: <TodoListPage />,
-      },
-      {
-        path: 'login',
-        element: <LoginPage />,
-      },
-      {
-        path: 'todo/:id',
-        element: <TodoDetailPage />,
+        element: <App />, // Layout component for protected routes
+        children: [
+          {
+            index: true,
+            element: <TodoListPage />,
+          },
+          {
+            path: 'todo/:id',
+            element: <TodoDetailPage />,
+          },
+        ],
       },
     ],
   },

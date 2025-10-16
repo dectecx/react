@@ -19,12 +19,12 @@ export type OpenAPIConfig = {
     ENCODE_PATH?: ((path: string) => string) | undefined;
 };
 
-export const OpenAPI = {
+export const OpenAPI: OpenAPIConfig = {
     BASE: 'https://localhost:7194',
     VERSION: '1.0',
     WITH_CREDENTIALS: false,
     CREDENTIALS: 'include',
-    TOKEN: '',
+    TOKEN: undefined,
     USERNAME: undefined,
     PASSWORD: undefined,
     HEADERS: undefined,

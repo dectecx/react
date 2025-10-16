@@ -7,7 +7,7 @@ export type WorkItem = {
     id?: number;
     title?: string | null;
     description?: string | null;
-    status?: string | null;
+    status?: 'pending' | 'in-progress' | 'completed' | null;
     createdUser?: string | null;
     createdTime?: string;
     updatedUser?: string | null;
