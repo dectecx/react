@@ -7,7 +7,8 @@ const REFRESH_TOKEN_KEY = 'refreshToken';
 export type UserRole = 'Admin' | 'User';
 
 interface JwtPayload {
-  role?: UserRole;
+  'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/role'?: string | string[];
+  role?: UserRole | UserRole[];
   [key: string]: any;
 }
 
@@ -22,12 +23,53 @@ class AuthManager {
     if (this.token) {
       try {
         const decoded = jwtDecode<JwtPayload>(this.token);
-        this.userRole = decoded.role || 'User';
+        this.userRole = this.extractRole(decoded);
       } catch (error) {
         console.error('Failed to decode token:', error);
         this.userRole = 'User'; // Default to User role
       }
     }
+  }
+
+  private extractRole(decoded: JwtPayload): UserRole {
+    // Try to get role from Microsoft Claims Role first (the actual one used by backend)
+    const microsoftRoleClaim = decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
+    if (microsoftRoleClaim) {
+      const roles = Array.isArray(microsoftRoleClaim) ? microsoftRoleClaim : [microsoftRoleClaim];
+      if (roles.includes('Admin')) {
+        return 'Admin';
+      }
+      if (roles.includes('User')) {
+        return 'User';
+      }
+    }
+    
+    // Fallback to XMLSOAP Claims Role
+    const xmlsoapRoleClaim = decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/role'];
+    if (xmlsoapRoleClaim) {
+      const roles = Array.isArray(xmlsoapRoleClaim) ? xmlsoapRoleClaim : [xmlsoapRoleClaim];
+      if (roles.includes('Admin')) {
+        return 'Admin';
+      }
+      if (roles.includes('User')) {
+        return 'User';
+      }
+    }
+    
+    // Fallback to simple 'role' claim
+    const simpleRole = decoded.role;
+    if (simpleRole) {
+      const roles = Array.isArray(simpleRole) ? simpleRole : [simpleRole];
+      if (roles.includes('Admin')) {
+        return 'Admin';
+      }
+      if (roles.includes('User')) {
+        return 'User';
+      }
+    }
+    
+    // Default to User role
+    return 'User';
   }
 
   public static getInstance(): AuthManager {
@@ -61,7 +103,7 @@ class AuthManager {
     // Decode and store user role
     try {
       const decoded = jwtDecode<JwtPayload>(token);
-      this.userRole = decoded.role || 'User';
+      this.userRole = this.extractRole(decoded);
     } catch (error) {
       console.error('Failed to decode token:', error);
       this.userRole = 'User';
