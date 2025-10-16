@@ -441,10 +441,6 @@
           "description": {
             "type": "string",
             "nullable": true
-          },
-          "status": {
-            "type": "string",
-            "nullable": true
           }
         },
         "additionalProperties": false
@@ -461,10 +457,6 @@
             "nullable": true
           },
           "description": {
-            "type": "string",
-            "nullable": true
-          },
-          "status": {
             "type": "string",
             "nullable": true
           },
@@ -491,11 +483,11 @@
       "WorkItemStateDto": {
         "type": "object",
         "properties": {
-          "itemId": {
+          "workItemId": {
             "type": "integer",
             "format": "int32"
           },
-          "isChecked": {
+          "isConfirmed": {
             "type": "boolean"
           }
         },

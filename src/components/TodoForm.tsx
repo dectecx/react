@@ -6,33 +6,20 @@ interface TodoFormProps {
   isEditing: boolean;
   onSubmit: (data: CreateWorkItemDto | UpdateWorkItemDto) => void;
   initialData?: WorkItemDto;
+  onCancel?: () => void; // Optional cancel callback
 }
 
-const TodoForm = ({ isEditing, onSubmit, initialData }: TodoFormProps) => {
+const TodoForm = ({ isEditing, onSubmit, initialData, onCancel }: TodoFormProps) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [status, setStatus] = useState<'pending' | 'in-progress' | 'completed'>(
-    'pending'
-  );
 
   useEffect(() => {
     if (isEditing && initialData) {
       setTitle(initialData.title ?? '');
       setDescription(initialData.description ?? '');
-      const currentStatus = initialData.status;
-      if (
-        currentStatus === 'pending' ||
-        currentStatus === 'in-progress' ||
-        currentStatus === 'completed'
-      ) {
-        setStatus(currentStatus);
-      } else {
-        setStatus('pending');
-      }
     } else {
       setTitle('');
       setDescription('');
-      setStatus('pending');
     }
   }, [isEditing, initialData]);
 
@@ -42,12 +29,7 @@ const TodoForm = ({ isEditing, onSubmit, initialData }: TodoFormProps) => {
       alert('Title is required');
       return;
     }
-
-    if (isEditing) {
-      onSubmit({ title, description, status });
-    } else {
-      onSubmit({ title, description });
-    }
+    onSubmit({ title, description });
   };
 
   return (
@@ -69,27 +51,16 @@ const TodoForm = ({ isEditing, onSubmit, initialData }: TodoFormProps) => {
           onChange={(e) => setDescription(e.target.value)}
         />
       </div>
-      {isEditing && (
-        <div className="form-group">
-          <label htmlFor="status">Status</label>
-          <select
-            id="status"
-            value={status}
-            onChange={(e) =>
-              setStatus(
-                e.target.value as 'pending' | 'in-progress' | 'completed'
-              )
-            }
-          >
-            <option value="pending">Pending</option>
-            <option value="in-progress">In Progress</option>
-            <option value="completed">Completed</option>
-          </select>
-        </div>
-      )}
-      <button type="submit" className="submit-button">
-        {isEditing ? 'Update' : 'Create'}
-      </button>
+      <div className="form-actions">
+        <button type="submit" className="submit-button">
+          {isEditing ? 'Update' : 'Create'}
+        </button>
+        {isEditing && onCancel && (
+          <button type="button" onClick={onCancel} className="cancel-button">
+            Cancel
+          </button>
+        )}
+      </div>
     </form>
   );
 };

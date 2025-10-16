@@ -6,7 +6,6 @@ export type WorkItemDto = {
     id?: number;
     title?: string | null;
     description?: string | null;
-    status?: string | null;
     createdUser?: string | null;
     createdTime?: string;
     updatedUser?: string | null;

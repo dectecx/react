@@ -49,6 +49,10 @@ tr:hover {
   background-color: var(--color-background);
 }
 
+tr.clickable-row:hover {
+  background-color: var(--color-background);
+}
+
 td a {
   color: var(--color-primary);
   text-decoration: none;
@@ -74,6 +78,23 @@ td button:hover {
 
 td button + button {
   margin-left: 0.5rem;
+}
+
+.action-button .icon {
+  display: none;
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+  .action-button .text {
+    display: none;
+  }
+  .action-button .icon {
+    display: inline;
+  }
+  .action-button {
+    padding: 0.5em;
+  }
 }
 
 .batch-actions {

@@ -7,7 +7,6 @@ import {
 import App from './pages/App.tsx';
 import LoginPage from './pages/LoginPage.tsx';
 import TodoListPage from './pages/TodoListPage.tsx';
-import TodoDetailPage from './pages/TodoDetailPage.tsx';
 import ProtectedRoute from './components/ProtectedRoute';
 import './style.css';
 import { OpenAPI } from './api/generated';
@@ -35,10 +34,6 @@ const router = createBrowserRouter([
       {
         index: true,
         element: <TodoListPage />,
-      },
-      {
-        path: 'todo/:id',
-        element: <TodoDetailPage />,
       },
     ],
   },

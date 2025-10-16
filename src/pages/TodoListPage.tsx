@@ -9,8 +9,9 @@ import { WorkItemsService, UserStatesService } from '../api/generated';
 import TodoForm from '../components/TodoForm';
 import InfoDisplay from '../components/InfoDisplay';
 import Toast from '../components/Toast';
+import TodoDetailModal from '../components/TodoDetailModal';
 import './TodoListPage.css';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 
 type SortKey = keyof WorkItemDto;
 type SortOrder = 'asc' | 'desc';
@@ -24,10 +25,19 @@ const TodoListPage = () => {
   const [todos, setTodos] = useState<WorkItemDto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [toastInfo, setToastInfo] = useState<ToastInfo | null>(null);
-  const [sortKey, setSortKey] = useState<SortKey>('createdTime');
-  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
+  
+  const [searchParams, setSearchParams] = useSearchParams();
+  
+  const [sortKey, setSortKey] = useState<SortKey>(
+    (searchParams.get('sortKey') as SortKey) || 'createdTime'
+  );
+  const [sortOrder, setSortOrder] = useState<SortOrder>(
+    (searchParams.get('sortOrder') as SortOrder) || 'desc'
+  );
+
   const [editingTodo, setEditingTodo] = useState<WorkItemDto | null>(null);
   const [checkedItems, setCheckedItems] = useState<Record<number, boolean>>({});
+  const [viewingTodo, setViewingTodo] = useState<WorkItemDto | null>(null);
 
   useEffect(() => {
     const fetchTodos = async () => {
@@ -66,12 +76,10 @@ const TodoListPage = () => {
   }, [todos, sortKey, sortOrder]);
 
   const handleSort = (key: SortKey) => {
-    if (sortKey === key) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortKey(key);
-      setSortOrder('asc');
-    }
+    const newSortOrder = (sortKey === key && sortOrder === 'asc') ? 'desc' : 'asc';
+    setSortKey(key);
+    setSortOrder(newSortOrder);
+    setSearchParams({ sortKey: key, sortOrder: newSortOrder });
   };
 
   const handleAddTodo = async (
@@ -141,12 +149,12 @@ const TodoListPage = () => {
 
   const handleConfirmStates = async () => {
     setToastInfo(null);
-    
+
     const statesToConfirm: WorkItemStateDto[] = Object.entries(checkedItems)
       .filter(([, isChecked]) => isChecked)
       .map(([itemId]) => ({
-        itemId: Number(itemId),
-        isChecked: true, // Assuming check means confirm
+        workItemId: Number(itemId), // Changed from itemId
+        isConfirmed: true,        // Changed from isChecked
       }));
 
     if (statesToConfirm.length === 0) {
@@ -162,11 +170,19 @@ const TodoListPage = () => {
         message: `Successfully confirmed ${statesToConfirm.length} item(s).`,
         type: 'success',
       });
-      setCheckedItems({}); // Clear selection after successful confirmation
+      setCheckedItems({});
     } catch (err) {
       setToastInfo({ message: "Failed to confirm items. Please try again.", type: 'error' });
       console.error(err);
     }
+  };
+
+  const handleViewDetails = (todo: WorkItemDto) => {
+    setViewingTodo(todo);
+  };
+
+  const handleCloseModal = () => {
+    setViewingTodo(null);
   };
 
   if (isLoading) {
@@ -179,94 +195,101 @@ const TodoListPage = () => {
   }
 
   return (
-    <div className="todolist-container">
-      {toastInfo && (
-        <Toast
-          message={toastInfo.message}
-          type={toastInfo.type}
-          onClose={() => setToastInfo(null)}
+    <>
+      <div className="todolist-container">
+        {toastInfo && (
+          <Toast
+            message={toastInfo.message}
+            type={toastInfo.type}
+            onClose={() => setToastInfo(null)}
+          />
+        )}
+        <h2>{editingTodo ? 'Edit Todo' : 'Add New Todo'}</h2>
+        <TodoForm
+          key={editingTodo ? editingTodo.id : 'add-form'}
+          isEditing={!!editingTodo}
+          onSubmit={editingTodo ? handleUpdateTodo : handleAddTodo}
+          initialData={editingTodo ?? undefined}
+          onCancel={handleCancelEdit} // Pass the cancel handler
         />
-      )}
-      <h2>{editingTodo ? 'Edit Todo' : 'Add New Todo'}</h2>
-      <TodoForm
-        key={editingTodo ? editingTodo.id : 'add-form'}
-        isEditing={!!editingTodo}
-        onSubmit={editingTodo ? handleUpdateTodo : handleAddTodo}
-        initialData={editingTodo ?? undefined}
-      />
-      {editingTodo && (
-        <button
-          type="button"
-          onClick={handleCancelEdit}
-          className="cancel-button"
-        >
-          Cancel Edit
-        </button>
-      )}
+        {editingTodo && (
+          <button
+            type="button"
+            onClick={handleCancelEdit}
+            className="cancel-button"
+          >
+            Cancel Edit
+          </button>
+        )}
 
-      <h2>Todo List</h2>
+        <h2>Todo List</h2>
 
-      {sortedTodos.length > 0 ? (
-        <>
-          <table>
-            <thead>
-              <tr>
-                <th>{/* Checkbox header */}</th>
-                <th onClick={() => handleSort('id')}>
-                  編號 {sortKey === 'id' && (sortOrder === 'asc' ? '▲' : '▼')}
-                </th>
-                <th onClick={() => handleSort('title')}>
-                  標題 {sortKey === 'title' && (sortOrder === 'asc' ? '▲' : '▼')}
-                </th>
-                <th onClick={() => handleSort('status')}>
-                  狀態 {sortKey === 'status' && (sortOrder === 'asc' ? '▲' : '▼')}
-                </th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sortedTodos.map((todo) => (
-                <tr key={todo.id}>
-                  <td>
-                    <input
-                      type="checkbox"
-                      checked={!!checkedItems[todo.id!]}
-                      onChange={() => handleCheckChange(todo.id!)}
-                    />
-                  </td>
-                  <td>{todo.id}</td>
-                  <td>
-                    <Link to={`/todo/${todo.id!}`}>{todo.title}</Link>
-                  </td>
-                  <td>{todo.status}</td>
-                  <td>
-                    <button type="button" onClick={() => handleEdit(todo)}>
-                      Edit
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => todo.id && handleDeleteTodo(todo.id)}
-                    >
-                      Delete
-                    </button>
-                  </td>
+        {sortedTodos.length > 0 ? (
+          <>
+            <table>
+              <thead>
+                <tr>
+                  <th>{/* Checkbox header */}</th>
+                  <th onClick={() => handleSort('id')}>
+                    編號 {sortKey === 'id' && (sortOrder === 'asc' ? '▲' : '▼')}
+                  </th>
+                  <th onClick={() => handleSort('title')}>
+                    標題 {sortKey === 'title' && (sortOrder === 'asc' ? '▲' : '▼')}
+                  </th>
+                  <th>Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-          <div className="batch-actions">
-            <button onClick={handleConfirmStates} className="confirm-button">
-              Confirm Selected Items
-            </button>
-          </div>
-        </>
-      ) : (
-        <InfoDisplay
-          title="No todos yet!"
-          message="Use the form above to add your first todo item."
-        />
+              </thead>
+              <tbody>
+                {sortedTodos.map((todo) => (
+                  <tr key={todo.id} onClick={() => handleViewDetails(todo)} className="clickable-row">
+                    <td onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        checked={!!checkedItems[todo.id!]}
+                        onChange={() => todo.id && handleCheckChange(todo.id)}
+                      />
+                    </td>
+                    <td>{todo.id}</td>
+                    <td>{todo.title}</td>
+                    <td onClick={(e) => e.stopPropagation()}>
+                      <button type="button" className="action-button" onClick={() => handleViewDetails(todo)}>
+                        <span className="icon">🔍</span>
+                        <span className="text">View</span>
+                      </button>
+                      <button type="button" className="action-button" onClick={() => handleEdit(todo)}>
+                        <span className="icon">✏️</span>
+                        <span className="text">Edit</span>
+                      </button>
+                      <button
+                        type="button"
+                        className="action-button"
+                        onClick={() => todo.id && handleDeleteTodo(todo.id)}
+                      >
+                        <span className="icon">🗑️</span>
+                        <span className="text">Delete</span>
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <div className="batch-actions">
+              <button onClick={handleConfirmStates} className="confirm-button">
+                Confirm Selected Items
+              </button>
+            </div>
+          </>
+        ) : (
+          <InfoDisplay
+            title="No todos yet!"
+            message="Use the form above to add your first todo item."
+          />
+        )}
+      </div>
+      {viewingTodo && (
+        <TodoDetailModal todo={viewingTodo} onClose={handleCloseModal} />
       )}
-    </div>
+    </>
   );
 };
 

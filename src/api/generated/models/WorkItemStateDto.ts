@@ -3,7 +3,7 @@
 /* tslint:disable */
 /* eslint-disable */
 export type WorkItemStateDto = {
-    itemId?: number;
-    isChecked?: boolean;
+    workItemId?: number;
+    isConfirmed?: boolean;
 };
 

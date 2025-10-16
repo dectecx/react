@@ -5,6 +5,5 @@
 export type UpdateWorkItemDto = {
     title?: string | null;
     description?: string | null;
-    status?: string | null;
 };
 
