@@ -1,24 +1,77 @@
+.todolist-container {
+  background-color: var(--color-surface);
+  padding: 2rem;
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+}
+
+.todolist-container h2 {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  color: var(--color-primary);
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
+  margin-top: 1.5rem;
 }
 
 th,
 td {
-  border: 1px solid #ddd;
-  padding: 8px;
+  padding: 1rem;
   text-align: left;
+  border-bottom: 1px solid var(--color-background);
 }
 
 th {
-  background-color: #f2f2f2;
+  color: var(--color-text-light);
+  font-weight: 600;
+  font-size: 0.9em;
+  text-transform: uppercase;
 }
 
 th[onClick] {
   cursor: pointer;
   user-select: none;
+  transition: color 0.2s;
 }
 
 th[onClick]:hover {
-  background-color: #e2e2e2;
+  color: var(--color-primary);
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+tr:hover {
+  background-color: var(--color-background);
+}
+
+td a {
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+td a:hover {
+  text-decoration: underline;
+}
+
+td button {
+  background-color: transparent;
+  border: 1px solid var(--color-text-light);
+  color: var(--color-text-light);
+  padding: 0.4em 0.8em;
+  font-size: 0.9em;
+}
+
+td button:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+td button + button {
+  margin-left: 0.5rem;
 }

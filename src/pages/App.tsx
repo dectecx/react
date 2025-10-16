@@ -1,14 +1,29 @@
-import { Outlet } from 'react-router-dom';
+import { Outlet, useNavigate } from 'react-router-dom';
 import './App.css';
+import { OpenAPI } from '../api/generated';
 
 function App() {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    // Clear token from storage and API client
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('refreshToken');
+    OpenAPI.TOKEN = undefined;
+
+    // Navigate to login page
+    navigate('/login');
+  };
+
   return (
-    <div>
-      <header>
-        <h1>TodoList App</h1>
-        {/* Navigation can go here */}
+    <div className="app-layout">
+      <header className="app-header">
+        <h1>My TodoList</h1>
+        <button onClick={handleLogout} className="logout-button">
+          Logout
+        </button>
       </header>
-      <main>
+      <main className="app-content">
         <Outlet />
       </main>
     </div>

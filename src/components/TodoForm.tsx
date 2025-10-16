@@ -46,9 +46,9 @@ const TodoForm = ({ onSubmit, initialData }: TodoFormProps) => {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <div>
-        <label htmlFor="title">Title:</label>
+    <form onSubmit={handleSubmit} className="todo-form">
+      <div className="form-group">
+        <label htmlFor="title">Title</label>
         <input
           id="title"
           type="text"
@@ -56,16 +56,16 @@ const TodoForm = ({ onSubmit, initialData }: TodoFormProps) => {
           onChange={(e) => setTitle(e.target.value)}
         />
       </div>
-      <div>
-        <label htmlFor="description">Description:</label>
+      <div className="form-group">
+        <label htmlFor="description">Description</label>
         <textarea
           id="description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
         />
       </div>
-      <div>
-        <label htmlFor="status">Status:</label>
+      <div className="form-group">
+        <label htmlFor="status">Status</label>
         <select
           id="status"
           value={status}
@@ -78,7 +78,9 @@ const TodoForm = ({ onSubmit, initialData }: TodoFormProps) => {
           <option value="completed">Completed</option>
         </select>
       </div>
-      <button type="submit">Submit</button>
+      <button type="submit" className="submit-button">
+        Submit
+      </button>
     </form>
   );
 };

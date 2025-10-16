@@ -1,3 +1,51 @@
-form {
-  margin-bottom: 1rem;
+.todo-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  align-items: flex-end;
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background-color: var(--color-background);
+  border-radius: var(--border-radius);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  margin-bottom: 0.5rem;
+  font-size: 0.9em;
+  font-weight: 500;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  margin: 0;
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 42px;
+}
+
+.submit-button {
+  background-color: var(--color-accent);
+  color: white;
+}
+
+.submit-button:hover {
+  opacity: 0.9;
+}
+
+.cancel-button {
+  background-color: var(--color-text-light);
+  color: white;
+  margin-left: 1rem;
+}
+
+.cancel-button:hover {
+  opacity: 0.9;
 }

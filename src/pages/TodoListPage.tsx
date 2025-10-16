@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import type { WorkItem } from '../api/generated';
 import { WorkItemsService } from '../api/generated';
 import TodoForm from '../components/TodoForm';
+import InfoDisplay from '../components/InfoDisplay';
 import './TodoListPage.css';
 import { Link } from 'react-router-dom';
 
@@ -119,15 +120,15 @@ const TodoListPage = () => {
   };
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <InfoDisplay title="Loading Todos..." />;
   }
 
   if (error) {
-    return <div>{error}</div>;
+    return <InfoDisplay title="Something went wrong" message={error} />;
   }
 
   return (
-    <div>
+    <div className="todolist-container">
       <h2>{editingTodo ? 'Edit Todo' : 'Add New Todo'}</h2>
       <TodoForm
         key={editingTodo ? editingTodo.id : 'add-form'}
@@ -143,51 +144,61 @@ const TodoListPage = () => {
         }
       />
       {editingTodo && (
-        <button type="button" onClick={handleCancelEdit}>
+        <button
+          type="button"
+          onClick={handleCancelEdit}
+          className="cancel-button"
+        >
           Cancel Edit
         </button>
       )}
 
       <h2>Todo List</h2>
-      <table>
-        <thead>
-          <tr>
-            <th onClick={() => handleSort('id')}>
-              編號 {sortKey === 'id' && (sortOrder === 'asc' ? '▲' : '▼')}
-            </th>
-            <th onClick={() => handleSort('title')}>
-              標題 {sortKey === 'title' && (sortOrder === 'asc' ? '▲' : '▼')}
-            </th>
-            <th onClick={() => handleSort('status')}>
-              狀態 {sortKey === 'status' && (sortOrder === 'asc' ? '▲' : '▼')}
-            </th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {sortedTodos.map((todo) => (
-            <tr key={todo.id}>
-              <td>{todo.id}</td>
-              <td>
-                <Link to={`/todo/${todo.id}`}>{todo.title}</Link>
-              </td>
-              <td>{todo.status}</td>
-              <td>
-                <button type="button" onClick={() => handleEdit(todo)}>
-                  Edit
-                </button>
-                <button
-                  type="button"
-                  onClick={() => todo.id && handleDeleteTodo(todo.id)}
-                  style={{ marginLeft: '0.5rem' }}
-                >
-                  Delete
-                </button>
-              </td>
+      {sortedTodos.length > 0 ? (
+        <table>
+          <thead>
+            <tr>
+              <th onClick={() => handleSort('id')}>
+                編號 {sortKey === 'id' && (sortOrder === 'asc' ? '▲' : '▼')}
+              </th>
+              <th onClick={() => handleSort('title')}>
+                標題 {sortKey === 'title' && (sortOrder === 'asc' ? '▲' : '▼')}
+              </th>
+              <th onClick={() => handleSort('status')}>
+                狀態 {sortKey === 'status' && (sortOrder === 'asc' ? '▲' : '▼')}
+              </th>
+              <th>Actions</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {sortedTodos.map((todo) => (
+              <tr key={todo.id}>
+                <td>{todo.id}</td>
+                <td>
+                  <Link to={`/todo/${todo.id}`}>{todo.title}</Link>
+                </td>
+                <td>{todo.status}</td>
+                <td>
+                  <button type="button" onClick={() => handleEdit(todo)}>
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => todo.id && handleDeleteTodo(todo.id)}
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      ) : (
+        <InfoDisplay
+          title="No todos yet!"
+          message="Use the form above to add your first todo item."
+        />
+      )}
     </div>
   );
 };
